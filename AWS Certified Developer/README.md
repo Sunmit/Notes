@@ -38,3 +38,15 @@ Continuous Integration
 - Deploy often
 - Happier developers, as they’re unblocked   
 ![image](https://github.com/Sunmit/Notes/blob/master/images/ci-intro.png)
+
+Continuous Delivery
+- Ensure that the software can be released reliably whenever needed.
+- Ensures deployments happen often and are quick
+- Shift away from “one release every 3 months” to ”5 releases a day”
+- That usually means automated deployment
+- - CodeDeploy
+- - Jenkins CD
+- - Spinnaker
+- - Etc…  
+![image](https://github.com/Sunmit/Notes/blob/master/images/cd-intro.png)  
+![image](https://github.com/Sunmit/Notes/blob/master/images/technology-stack-for-cicd.png)
