@@ -121,3 +121,43 @@ We’ll learn about
     * If CodePipeline fails a stage, your pipeline stops and you can get information in the console
     * AWS CloudTrail can be used to audit AWS API calls
     * If Pipeline can’t perform an action, make sure the “IAM Service Role” attached does have enough permissions (IAM Policy)
+---
+### 9.5 CodeBuild ###
+* CodeBuild Overview  
+    * Fully managed build service  
+    * Alternative to other build tools such as Jenkins  
+    * Continuous scaling (no servers to manage or provision – no build queue)
+    * Pay for usage: the time it takes to complete the builds
+    * Leverages Docker under the hood for reproducible builds
+    * Possibility to extend capabilities leveraging our own base Docker images
+    * Secure: Integration with KMS for encryption of build artifacts, IAM for build permissions, and VPC for network security, CloudTrail for API calls logging
+    * Source Code from GitHub / CodeCommit / CodePipeline / S3…
+    * Build instructions can be defined in code (buildspec.yml file)
+    * Output logs to Amazon S3 & AWS CloudWatch Logs
+    * Metrics to monitor CodeBuild statistics
+    * Use CloudWatch Events to detect failed builds and trigger notifications
+    * Use CloudWatch Alarms to notify if you need “thresholds” for failures
+    * CloudWatch Events / AWS Lambda as a Glue
+    * SNS notifications
+    * Ability to reproduce CodeBuild locally to troubleshoot in case of errors
+    * Builds can be defined within CodePipeline or CodeBuild itself
+* How CodeBuild works  
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/how-code-build-works.png)  
+   
+* CodeBuild BuildSpec
+    * ***buildspec.yml*** file must be at the root of your code
+    * Define environment variables:
+        * Plaintext variables
+        * Secure secrets: use SSM Parameter store
+    * Phases (specify commands to run):
+        * Install: install dependencies you may need for your build
+        * Pre build: final commands to execute before build
+        * ***Build: actual build commands***
+        * Post build: finishing touches (zip output for example)
+    * Artifacts: What to upload to S3 (encrypted with KMS)
+    * Cache: Files to cache (usually dependencies) to S3 for future build speedup
+* CodeBuild Local Build
+    * In case of need of deep troubleshooting beyond logs…
+    * You can run CodeBuild locally on your desktop (after installing Docker)
+    * For this, leverage the CodeBuild Agent
+    * [aws docs](https://docs.aws.amazon.com/codebuild/latest/userguide/use-codebuild-agent.html)
