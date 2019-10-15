@@ -161,3 +161,96 @@ We’ll learn about
     * You can run CodeBuild locally on your desktop (after installing Docker)
     * For this, leverage the CodeBuild Agent
     * [aws docs](https://docs.aws.amazon.com/codebuild/latest/userguide/use-codebuild-agent.html)
+---
+### 9.6 AWS CodeDeploy ###
+* CodeDeploy Overview
+    * We want to deploy our application automatically to many EC2 instances
+    * These instances are not managed by Elastic Beanstalk
+    * There are several ways to handle deployments using open source tools (Ansible, Terraform, Chef, Puppet, etc…)
+    * We can use the managed Service AWS CodeDeploy
+* AWS CodeDeploy – Steps to make it work
+    * Each EC2 Machine (or On Premise machine) must be running the CodeDeploy Agent
+    * The agent is continuously polling AWS CodeDeploy for work to do
+    * CodeDeploy sends appspec.yml file.
+    * Application is pulled from GitHub or S3
+    * EC2 will run the deployment instructions
+    * CodeDeploy Agent will report of success / failure of deployment on the instance   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/codedeploy-overview.png) 
+* AWS CodeDeploy – Other
+    * EC2 instances are grouped by deployment group (dev / test / prod)
+    * Lots of flexibility to define any kind of deployments
+    * CodeDeploy can be chained into CodePipeline and use artifacts from there
+    * CodeDeploy can re-use existing setup tools, works with any application, auto scaling integration
+    * Note: Blue / Green only works with EC2 instances (not on premise)
+    * Support for AWS Lambda deployments (we’ll see this later)
+    * CodeDeploy does not provision resources
+* AWS CodeDeploy Primary Components
+    * ***Application:*** unique name
+    * ***Compute platform:***  EC2/On-Premise or Lambda
+    * ***Deployment configuration:***  Deployment rules for success / failures
+        * EC2/On-Premise: you can specify the minimum number of healthy instances for the deployment.
+        * AWS Lambda: specify how traffic is routed to your updated Lambda function versions.
+    * ***Deployment group:*** group of tagged instances (allows to deploy gradually)
+    * ***Deployment type:*** In-place deployment or Blue/green deployment:
+    * ***IAM instance profile:*** need to give EC2 the permissions to pull from S3 / GitHub
+    * ***Application Revision:*** application code + appspec.yml file
+    * ***Service role:*** Role for CodeDeploy to perform what it needs
+    * ***Target revision:*** Target deployment application version
+* AWS CodeDeploy AppSpec
+    * File section: how to source and copy from S3 / GitHub to filesystem
+    * Hooks: set of instructions to do to deploy the new version (hooks can have timeouts). The order is:
+        * ApplicationStop
+        * DownloadBundle
+        * BeforeInstall
+        * AfterInstall
+        * ApplicationStart
+        * ValidateService: really important
+* AWS CodeDeploy Deploy & Hooks Order   
+  ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/codedeploy-hooksorder.png)
+* AWS CodeDeploy Deployment Config
+    * Configs:
+        * One a time: one instance at a time, one instance fails => deployment stops
+        * Half at a time: 50%
+        * All at once: quick but no healthy host, downtime. Good for dev
+        * Custom: min healthy host = 75%
+    * Failures:
+        * Instances stay in “failed state”
+        * New deployments will first be deployed to “failed state” instances
+        * To rollback: redeploy old deployment or enable automated rollback for failures
+    * Deployment Targets:
+        * Set of EC2 instances with tags
+        * Directly to an ASG
+        * Mix of ASG / Tags so you can build deployment segments
+        * Customization in scripts with DEPLOYMENT_GROUP_NAME environment variables
+* In Place Deployment – Half at a time  
+  ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/deployment-half-at-a-time.png) 
+* Blue Green Deployment
+   ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/deployment-blue-green.png) 
+
+
+* hands on steps
+    * create two IAM roles
+        * ***first role:*** create role - choose codeDeploy - choose codeDeploy - next:permission - next:tags - next:review - set a role name(such as CodeDeployServiceRole) - create role
+        * ***second role:*** create role - choose EC2 - next:permission - policies search: AmazonS3ReadOnlyAccess - next:tags - next:review - set a role name(such as EC2InstanceRoleForCodeDeploy) - create role
+    * create deploy
+        * choose CodeDeploy service
+        * Deploy - getting started -creat application - set Application name - set Compute platform (EC2/On-premises)
+        * create a EC2 instance (configure IAM role the same as ***second role***)
+        * set Security Group ssh and http
+        * lanunch
+    * install codedeploy agent
+        * log in ec2 instance
+        * excute cli in [shell](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/code/aws-cicd/codedeploy/commands.sh)
+    * add tag to EC2 (Key Environment Value Dev)
+    * create deployment group in CodeDeploy-Applications 
+        * name the group (such as DevelopmentInstances)  
+        * select service role (CodeDeployServiceRole)
+        * Environment Configuration
+            * choose Amazon EC2 Instance 
+            * Key Environment Value Dev
+            * unselect loadbalance
+    * create deployment
+        * create s3 bucket
+        * update [application file](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/code/aws-cicd/codedeploy/SampleApp_Linux.zip) to s3 bucket
+        * fill the s3 file address
+        * create deployment
