@@ -37,7 +37,7 @@ Continuous Integration
 - Deliver faster as the code is tested
 - Deploy often
 - Happier developers, as they’re unblocked   
-![image](https://github.com/Sunmit/Notes/blob/master/images/ci-intro.png)
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/ci-intro.png)
 
 Continuous Delivery
 - Ensure that the software can be released reliably whenever needed.
@@ -48,5 +48,5 @@ Continuous Delivery
 - - Jenkins CD
 - - Spinnaker
 - - Etc…  
-![image](https://github.com/Sunmit/Notes/blob/master/images/cd-intro.png)  
-![image](https://github.com/Sunmit/Notes/blob/master/images/technology-stack-for-cicd.png)
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cd-intro.png)  
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/technology-stack-for-cicd.png)
