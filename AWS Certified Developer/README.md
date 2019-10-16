@@ -1,7 +1,16 @@
 # Index #   
-* 9. [Section 9: AWS CI/CD](l9-aws-cicd)
+* 9. [Section 9: AWS CI/CD](#l9-aws-cicd)
     * 9.1 [Continuous Integration](#l9-1)
+    * 9.2 [Continuous Delivery](#l9-2)
+    * 9.3 [CodeCommit](#l9-3)
+    * 9.4 [CodePipeline](#l9-4)
+    * 9.5 [CodeBuild](#l9-5)
+    * 9.6 [AWS CodeDeploy](#l9-6)
+    * 9.7 [CodeStar](#l9-7)
 * 10. [Section 10: AWS CloudFormation](#l10-aws-cloudformation)
+    * 10.1 [CloudFormation Introduce](#l10-1)
+    * 10.2 [YAML Crash Course](#l10-2)
+    * 10.3 [CloudFormation Rollbacks](#l10-3)
 ---
 ## Exam  Details
 - Deployment:CI/CD,BeanStalk,Serverless
@@ -34,7 +43,7 @@ We’ll learn about
 - AWS CodeBuild: building and testing our code
 - AWS CodeDeploy: deploying the code to EC2 fleets (not Beanstalk)
 
-### 9.1<a name='l9-1'> Continuous Integration ###
+### 9.1<a name='l9-1'/> Continuous Integration ###
 - Developers push the code to a code repository often (GitHub / CodeCommit / Bitbucket / etc…)
 - A testing / build server checks the code as soon as it’s pushed (CodeBuild / Jenkins CI / etc…)
 - The developer gets feedback about the tests and checks that have passed / failed
@@ -44,7 +53,7 @@ We’ll learn about
 - Happier developers, as they’re unblocked    
 ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/ci-intro.png)
 
-### 9.2 Continuous Delivery ###
+### 9.2<a name='l9-2'/> Continuous Delivery ###
 - Ensure that the software can be released reliably whenever needed.
 - Ensures deployments happen often and are quick
 - Shift away from “one release every 3 months” to ”5 releases a day”
@@ -56,7 +65,7 @@ We’ll learn about
 ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cd-intro.png)  
 ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/technology-stack-for-cicd.png)
 
-### 9.3 CodeCommit ###
+### 9.3<a name='l9-3'/> CodeCommit ###
 * CodeCommit Securty  
     * Interactions are done using Git (standard)
     * Authentication in Git:
@@ -102,7 +111,7 @@ We’ll learn about
         * Commit comment events
         * CloudWatch Event Rules goes into an SNS topic
 ---
-### 9.4 CodePipeline ###
+### 9.4<a name='l9-4'/> CodePipeline ###
 * Continuous delivery
 * Visual workflow
 * Source: GitHub / CodeCommit / Amazon S3
@@ -127,7 +136,7 @@ We’ll learn about
     * AWS CloudTrail can be used to audit AWS API calls
     * If Pipeline can’t perform an action, make sure the “IAM Service Role” attached does have enough permissions (IAM Policy)
 ---
-### 9.5 CodeBuild ###
+### 9.5<a name='l9-5'/> CodeBuild ###
 * CodeBuild Overview  
     * Fully managed build service  
     * Alternative to other build tools such as Jenkins  
@@ -167,7 +176,7 @@ We’ll learn about
     * For this, leverage the CodeBuild Agent
     * [aws docs](https://docs.aws.amazon.com/codebuild/latest/userguide/use-codebuild-agent.html)
 ---
-### 9.6 AWS CodeDeploy ###
+### 9.6<a name='l9-6'/> AWS CodeDeploy ###
 * CodeDeploy Overview
     * We want to deploy our application automatically to many EC2 instances
     * These instances are not managed by Elastic Beanstalk
@@ -260,7 +269,7 @@ We’ll learn about
         * fill the s3 file address
         * create deployment
 ---
-### 9.7 CodeStar ###   
+### 9.7<a name='l9-7'/> CodeStar ###   
 * CodeStar Overview   
     * CodeStar is an integrated solution that regroups: GitHub, CodeCommit, CodeBuild, CodeDeploy, CloudFormation, CodePipeline, CloudWatch
     * Helps quickly create “CICD-ready” projects for EC2, Lambda, Beanstalk
@@ -272,3 +281,280 @@ We’ll learn about
     * Limited Customization
 ---
 ## Section 10:<a name='l10-aws-cloudformation'/> AWS CloudFormation ###
+### 10.1<a name='l10-1'/> CloudFormation Introduce ###
+* Infrastruction as Code
+    * Currently, we have been doing a lot of manual work
+    * All this manual work will be very tough to reproduce:
+        * In another region
+        * in another AWS account
+        * Within the same region if everything was deleted
+    * Wouldn’t it be great, if all our infrastructure was… code?   
+    * That code would be deployed and create / update / delete our infrastructure   
+    
+* What is CloudFormation
+    * CloudFormation is a declarative way of outlining your AWS Infrastructure, for any resources (most of them are supported).
+    * For example, within a CloudFormation template, you say:
+        * I want a security group
+        * I want two EC2 machines using this security group
+        * I want two Elastic IPs for these EC2 machines
+        * I want an S3 bucket
+        * I want a load balancer (ELB) in front of these machines
+    * Then CloudFormation creates those for you, in the ***right order***, with the ***exact configuration*** that you specify
+
+   
+* Benefits of AWS CloudFormation
+    * Infrastructure as code
+        * No resources are manually created, which is excellent for control
+        * The code can be version controlled for example using git
+        * Changes to the infrastructure are reviewed through code
+    * Cost
+        * Each resources within the stack is tagged with an identifier so you can easily see how much a stack costs you
+        * You can estimate the costs of your resources using the CloudFormation template
+        * Savings strategy: In Dev, you could automation deletion of templates at 5 PM and recreated at 8 AM, safely
+    * Productivity
+        * Ability to destroy and re-create an infrastructure on the cloud on the fly
+        * Automated generation of Diagram for your templates!
+        * Declarative programming (no need to figure out ordering and orchestration)
+    * Separation of concern: create many stacks for many apps, and many layers. Ex:
+        * VPC stacks
+        * Network stacks
+        * App stacks
+    * Don’t re-invent the wheel
+        * Leverage existing templates on the web!
+        * Leverage the documentation
+* How CloudFormation Works
+    * Templates have to be uploaded in S3 and then referenced in CloudFormation
+    * To update a template, we can’t edit previous ones. We have to re- upload a new version of the template to AWS
+    * Stacks are identified by a name
+    * Deleting a stack deletes every single artifact that was created by CloudFormation.
+* Deploying CloudFormation templates
+    * Manual way:
+        * Editing templates in the CloudFormation Designer
+        * Using the console to input parameters, etc
+    * Automated way:
+        * Editing templates in a YAML file
+        * Using the AWS CLI (Command Line Interface) to deploy the templates
+        * Recommended way when you fully want to automate your flow
+* CloudFormation Building Blocks
+    * Templates components (one course section for each):
+        * 1. ***Resources: your AWS resources declared in the template (MANDATORY)***
+        * 2. Parameters: the dynamic inputs for your template
+        * 3. Mappings: the static variables for your template
+        * 4. Outputs: References to what has been created
+        * 5. Conditionals: List of conditions to perform resource creation
+        * 6. Metadata
+    * Templates helpers:
+        * References
+        * Functions
+
+* Create Stack Hands On
+    * create stack - Template is ready - Upload a [Template file](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/code/cloudformation/0-just-ec2.yaml) - set stack name(MyFirstCloudFormateTemplate) - next - create stack
+    * update stack - action - update stack - upload a [template](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/code/cloudformation/1-ec2-with-sg-eip.yaml) to Amazon S3 - next - next - next - update
+    * delete stack 
+        * it will delete all the resources in the template
+---
+### 10.2<a name='l10-2'/> YAML Crash Course ###   
+* **10.2.1 Overview**
+    * YAML and JSON are the languages you can use for CloudFormation.
+    * <span style="color:red">JSON is horrible for CF</span>   
+    * <span style="color:green">YAML is great in so many ways</span>  
+    * Key value Pairs
+    * Nested objects
+    * Support Arrays
+    * Multi line strings
+    * Can include comments!   
+![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/yaml-crash.png)   
+---
+* 10.2.2 Resources 
+    * Introduction     
+        * Resources are the core of your CloudFormation template (MANDATORY)
+        * They represent the different AWS Components that will be created and configured
+        * Resources are declared and can reference each other
+        * AWS figures out creation, updates and deletes of resources for us
+        * There are over 224 types of resources  (!)
+        * Resource types identifiers are of the form:    
+    <span style="color:blue">AWS::aws-product-name::data-type-name</span>   
+
+    * Resource Documents
+        * [All the Documents](#http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html)
+        * [EC2 instance Document](#http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html)   
+
+    * FAQ
+        * Can I create a dynamic amount of resources?   
+        No, you can’t. Everything in the CloudFormation template has to be declared. You can’t perform code generation there.
+        * Is every AWS Service supported?   
+        Almost. Only a select few niches are not there yet   
+        You can work around that using AWS Lambda Custom Resources.
+---
+* 10.2.3 Parameters 
+    * Introduction
+        * Parameters are a way to provide inputs to your AWS CloudFormation template
+        * They’re important to know about if:
+            * You want to **reuse** your templates across the company
+            * Some inputs can not be determined ahead of time
+        * Parameters are extremely powerful, controlled, and can prevent errors from happening in your templates thanks to types.
+
+    * When to use a parameter?
+        * Ask yourself this:
+            * Is this CloudFormation resource configuration likely to change in the future?
+            * If so, make it a parameter.
+        * You won’t have to re-upload a template to change its content   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-1.png)   
+
+    * Parameters Settings
+        * Parameters can be controlled by all these settings:   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-2.png)   
+    
+    * How to Reference a Parameter
+        * The <span style="color:blue">Fn::Ref</span> function can be leveraged to reference parameters
+        * Parameters can be used anywhere in a template.
+        * The shorthand for this in YAML is <span style="color:blue">!Ref</span>
+        * The function can also reference other elements within the template   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-3.png)   
+
+    * Concept: Pseudo Parameters
+        * AWS offers us pseudo parameters in any CloudFormation template.
+        * These can be used at any time and are enabled by default   
+    
+    Reference Value | Example Return Value
+    ---|---
+    AWS::AccountId       | 1234567890
+    AWS::NotificationARNs| [arn:aws:sns:us-east-<br>1:123456789012:MyTopic]
+    AWS::NotificationARNs|Does not return a value.
+    AWS::Region          |us-east-2
+    AWS::StackId         |arn:aws:cloudformation:us-east-</br>1:123456789012:stack/MyStack/1c2fa62</br> 0-982a-11e3-aff7-50e2416294e0
+    AWS::StackName       |MyStack
+
+---
+* 10.2.4 Mapping 
+    * Introduction
+        * Mappings are fixed variables within your CloudFormation Template.
+        * They’re very handy to differentiate between different environments (dev vs prod), regions (AWS regions), AMI types, etc
+        * All the values are hardcoded within the template
+        * Example:   
+    ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-1.png)   
+    ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-2.png)   
+
+    * mappings vs parameters   
+        * Mappings are great when you know in advance all the values that can be taken and that they can be deduced from variables such as   
+            * Region
+            * Availability Zone
+            * AWS Account
+            * Environment (dev vs prod)
+            * Etc…
+        * They allow safer control over the template.
+        * Use parameters when the values are really user specific   
+
+    * FindInMap
+        * We use Fn::FindInMap to return a named value from a specific key
+        * !FindInMap [ MapName, TopLevelKey, SecondLevelKey ]   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-3.png)     
+
+---
+* 10.2.5<a name="l10-6"/> Outputs   
+    * What are outputs?
+        * The Outputs section declares optional outputs values that we can import into other stacks (if you export them first)!
+        * You can also view the outputs in the AWS Console or in using the AWS CLI
+        * They’re very useful for example if you define a network CloudFormation, and output the variables such as VPC ID and your Subnet IDs
+        * It’s the best way to perform some collaboration cross stack, as you let expert handle their own part of the stack
+        * You can’t delete a CloudFormation Stack if its outputs are being referenced by another CloudFormation stack
+
+    * Outputs Example
+        * Creating a SSH Security Group as part of one template
+        * We create an output that references that security group   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-outputs-1.png)      
+---
+* 10.2.6 Cross Stack Reference
+    * Introduction
+        * We then create a second template that leverages that security group
+        * For this, we use the <span style="color:blue">Fn::ImportValue<span> function
+        * You can’t delete the underlying stack until all the references are deleted too.   
+            ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-csr-1.png)   
+
+---
+* 10.2.7 Conditions
+    * Introduction
+        * Conditions are used to control the creation of resources or outputs based on a condition.
+        * Conditions can be whatever you want them to be, but common ones are:
+            * Environment (dev / test / prod)
+            * AWS Region
+            * Any parameter value
+        * Each condition can reference another condition, parameter value or mapping
+    * How to define a condition?   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-1.png)   
+        * The logical ID is for you to choose. It’s how you name condition
+        * The intrinsic function (logical) can be any of the following:
+            * Fn::And
+            * Fn::Equals
+            * Fn::If
+            * Fn::Not
+            * Fn::Or
+    * Using a Condition
+        * Conditions can be applied to resources / outputs / etc…   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-2.png)   
+
+---
+* 10.2.8 Intrisic Function
+    * Overview
+        * [Fn::Ref](#l10-2-8-1)
+        * [Fn::GetAtt](#l10-2-8-2)
+        * [Fn::FindInMap](#l10-2-8-3)
+        * [Fn::ImportValue](#l10-2-8-4)
+        * [Fn::Join](#l10-2-8-5)
+        * [Fn::Sub](#l10-2-8-6)
+        * [Condition Functions](#l10-2-8-7) (Fn::If, Fn::Not, Fn::Equals, etc…)
+
+    * Fn::Ref<a name='l10-2-8-1'/>
+        * The <span style="color:blue">Fn::Ref</span> function can be leveraged to reference
+            * Parameters => returns the value of the parameter
+            * Resources => returns the physical ID of the underlying resource (ex: EC2 ID)
+        * The shorthand for this in YAML is <span style="color:blue">!Ref</span>   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-1.png)   
+    * Fn::GetAtt<a name='l10-2-8-2'/>  
+        * Attributes are attached to any resources you create
+        * To know the attributes of your resources, the best place to look at is the documentation.
+        * For example: the AZ of an EC2 machine!   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-2.png)   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-3.png)  
+
+    * Fn::FindInMap<a name='l10-2-8-3'/> Accessing Mapping Values   
+        * We use **Fn::FindInMap** to return a named value from a specific key
+        * !FindInMap [ MapName, TopLevelKey, SecondLevelKey ]   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-4.png)   
+
+    * Fn::ImportValue<a name='l10-2-8-4'/>
+        * Import values that are exported in other templates
+        * For this, we use the <span style="color:blue">Fn::ImportValue<span> function   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-5.png)   
+
+    * Fn::Join<a name='l10-2-8-5'/>
+        * Join values with a delimiter   
+        <span style="color:red"> !join [ delimiter, [ comma-delimted list of values ] ]<span>   
+        * This creates "a:b:c"   
+            !join [ ":", [a, b, c] ]
+
+    * Fn::Sub<a name='l10-2-8-6'/>
+        * <span style="color:blue">Fn::Sub</span>, or <span style="color:blue">!Sub</span> as a shorthand, is used to substitute variables from a text. It’s a very handy function that will allow you to fully customize your templates.
+        * For example, you can combine <span style="color:blue">Fn::Sub</span> with References or AWS Pseudo variables!
+        * String must contain <span style="color:blue">${VariableName}</span> and will substitute them   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-6.png)   
+
+    * Condition Functions<a name='l10-2-8-7'/>   
+        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-3.png) 
+        * The logical ID is for you to choose. It’s how you name condition
+        * The intrinsic function (logical) can be any of the following:
+            * Fn::And
+            * Fn::Equals
+            * Fn::If
+            * Fn::Not
+            * Fn::Or
+---
+### 10.3<a name='l10-3'/> CloudFormation Rollbacks ###
+* Stack Creation Fails:
+    * Default: everything rolls back (gets deleted). We can look at the log
+    * Option to disable rollback and troubleshoot what happened
+
+* Stack Update Fails:
+    * The stack automatically rolls back to the previous known working state
+    * Ability to see in the log what happened and error messages
+
