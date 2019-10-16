@@ -1,3 +1,8 @@
+# Index #   
+* 9. [Section 9: AWS CI/CD](l9-aws-cicd)
+    * 9.1 [Continuous Integration](#l9-1)
+* 10. [Section 10: AWS CloudFormation](#l10-aws-cloudformation)
+---
 ## Exam  Details
 - Deployment:CI/CD,BeanStalk,Serverless
 - Security:deep dive + dedicate section
@@ -15,7 +20,7 @@ systemctl enable httpd.service
 echo "hello world" > /var/www/html/index.html  
 echo "Hello World from $(hostname -f)" > /var/www/html/index.html  
 
-## 9 AWS CI/CD ###
+## Section 9:<a name='l9-aws-cicd'/> AWS CI/CD ###
 What we’d like is to push our code “in a repository” and have it deployed onto the AWS
 -  Automatically
 -  The right way
@@ -29,7 +34,7 @@ We’ll learn about
 - AWS CodeBuild: building and testing our code
 - AWS CodeDeploy: deploying the code to EC2 fleets (not Beanstalk)
 
-### 9.1 Continuous Integration ###
+### 9.1<a name='l9-1'> Continuous Integration ###
 - Developers push the code to a code repository often (GitHub / CodeCommit / Bitbucket / etc…)
 - A testing / build server checks the code as soon as it’s pushed (CodeBuild / Jenkins CI / etc…)
 - The developer gets feedback about the tests and checks that have passed / failed
@@ -265,3 +270,5 @@ We’ll learn about
     * One dashboard to view all your components
     * Free service, pay only for the underlying usage of other services
     * Limited Customization
+---
+## Section 10:<a name='l10-aws-cloudformation'/> AWS CloudFormation ###
