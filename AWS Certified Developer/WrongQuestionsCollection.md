@@ -1,7 +1,7 @@
 # Index #
-* 1. [Section 9: AWS CI/CD](#Section 1: AWS CI/CD)
+* 1. [Section 9: AWS CI/CD](#9-AWS-CI/CD)
 
-## Section 1:<a name='Section 1: AWS CI/CD'/> AWS CI/CD ##
+## Section 1:<a name='9-AWS-CI/CD'/> AWS CI/CD ##
 1. which hook step should be used in appspec.yml file to ensure the application is properly running after being deployed?
   AfterInstall   
   ValidateService   
