@@ -22,5 +22,6 @@
     true   
     false   
     ***Answer:*** false   
+    ***Analysis:*** CloudFormation creates them in the right order, so we no need to figure out ordering and orchestration.
 ---
   
