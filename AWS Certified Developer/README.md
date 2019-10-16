@@ -363,7 +363,7 @@ We’ll learn about
     * Support Arrays
     * Multi line strings
     * Can include comments!   
-![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/yaml-crash.png)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/yaml-crash.png)   
 ---
 * 10.2.2 Resources 
     * Introduction     
@@ -399,18 +399,18 @@ We’ll learn about
             * Is this CloudFormation resource configuration likely to change in the future?
             * If so, make it a parameter.
         * You won’t have to re-upload a template to change its content   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-1.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-1.png)   
 
     * Parameters Settings
         * Parameters can be controlled by all these settings:   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-2.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-2.png)   
     
     * How to Reference a Parameter
         * The <span style="color:blue">Fn::Ref</span> function can be leveraged to reference parameters
         * Parameters can be used anywhere in a template.
         * The shorthand for this in YAML is <span style="color:blue">!Ref</span>
         * The function can also reference other elements within the template   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-3.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-parameters-3.png)   
 
     * Concept: Pseudo Parameters
         * AWS offers us pseudo parameters in any CloudFormation template.
@@ -432,8 +432,8 @@ We’ll learn about
         * They’re very handy to differentiate between different environments (dev vs prod), regions (AWS regions), AMI types, etc
         * All the values are hardcoded within the template
         * Example:   
-    ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-1.png)   
-    ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-2.png)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-1.png)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-2.png)   
 
     * mappings vs parameters   
         * Mappings are great when you know in advance all the values that can be taken and that they can be deduced from variables such as   
@@ -448,7 +448,7 @@ We’ll learn about
     * FindInMap
         * We use Fn::FindInMap to return a named value from a specific key
         * !FindInMap [ MapName, TopLevelKey, SecondLevelKey ]   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-3.png)     
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-mapping-3.png)     
 
 ---
 * 10.2.5<a name="l10-6"/> Outputs   
@@ -462,14 +462,14 @@ We’ll learn about
     * Outputs Example
         * Creating a SSH Security Group as part of one template
         * We create an output that references that security group   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-outputs-1.png)      
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-outputs-1.png)      
 ---
 * 10.2.6 Cross Stack Reference
     * Introduction
         * We then create a second template that leverages that security group
         * For this, we use the <span style="color:blue">Fn::ImportValue<span> function
         * You can’t delete the underlying stack until all the references are deleted too.   
-            ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-csr-1.png)   
+            ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-csr-1.png)   
 
 ---
 * 10.2.7 Conditions
@@ -481,7 +481,7 @@ We’ll learn about
             * Any parameter value
         * Each condition can reference another condition, parameter value or mapping
     * How to define a condition?   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-1.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-1.png)   
         * The logical ID is for you to choose. It’s how you name condition
         * The intrinsic function (logical) can be any of the following:
             * Fn::And
@@ -491,7 +491,7 @@ We’ll learn about
             * Fn::Or
     * Using a Condition
         * Conditions can be applied to resources / outputs / etc…   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-2.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-2.png)   
 
 ---
 * 10.2.8 Intrisic Function
@@ -509,23 +509,23 @@ We’ll learn about
             * Parameters => returns the value of the parameter
             * Resources => returns the physical ID of the underlying resource (ex: EC2 ID)
         * The shorthand for this in YAML is <span style="color:blue">!Ref</span>   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-1.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-1.png)   
     * Fn::GetAtt<a name='l10-2-8-2'/>  
         * Attributes are attached to any resources you create
         * To know the attributes of your resources, the best place to look at is the documentation.
         * For example: the AZ of an EC2 machine!   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-2.png)   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-3.png)  
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-2.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-3.png)  
 
     * Fn::FindInMap<a name='l10-2-8-3'/> Accessing Mapping Values   
         * We use **Fn::FindInMap** to return a named value from a specific key
         * !FindInMap [ MapName, TopLevelKey, SecondLevelKey ]   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-4.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-4.png)   
 
     * Fn::ImportValue<a name='l10-2-8-4'/>
         * Import values that are exported in other templates
         * For this, we use the <span style="color:blue">Fn::ImportValue<span> function   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-5.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-5.png)   
 
     * Fn::Join<a name='l10-2-8-5'/>
         * Join values with a delimiter   
@@ -537,10 +537,10 @@ We’ll learn about
         * <span style="color:blue">Fn::Sub</span>, or <span style="color:blue">!Sub</span> as a shorthand, is used to substitute variables from a text. It’s a very handy function that will allow you to fully customize your templates.
         * For example, you can combine <span style="color:blue">Fn::Sub</span> with References or AWS Pseudo variables!
         * String must contain <span style="color:blue">${VariableName}</span> and will substitute them   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-6.png)   
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-intrisic-6.png)   
 
     * Condition Functions<a name='l10-2-8-7'/>   
-        ![image](#https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-3.png) 
+        ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cf-condition-3.png) 
         * The logical ID is for you to choose. It’s how you name condition
         * The intrinsic function (logical) can be any of the following:
             * Fn::And
