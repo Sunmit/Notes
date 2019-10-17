@@ -11,6 +11,16 @@
     * 10.1 [CloudFormation Introduce](#l10-1)
     * 10.2 [YAML Crash Course](#l10-2)
     * 10.3 [CloudFormation Rollbacks](#l10-3)
+* 11. [Section 11: AWS Monitoring, Troubleshooting & Audit](#l11)
+    * 11.1 [Monitoring Overview in AWS](#l11-1)
+    * 11.2 [AWS CloudWatch](#l11-2)
+        * [Metrics](#l11-2-1)
+        * [Logs](#l11-2-3)
+        * [Events](#l11-2-4)
+        * [Alarms](#l11-2-2)
+    * 11.3 [AWS X-Ray](#l11-3)
+    * 11.4 [AWS CloudTrail](#l11-4)
+    * 11.5 [CloudTrail vs CloudWatch vs X-Ray](#l11-5)
 ---
 ## Exam  Details
 - Deployment:CI/CD,BeanStalk,Serverless
@@ -376,8 +386,8 @@ We’ll learn about
     <span style="color:blue">AWS::aws-product-name::data-type-name</span>   
 
     * Resource Documents
-        * [All the Documents](#http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html)
-        * [EC2 instance Document](#http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html)   
+        * [All the Documents](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html)
+        * [EC2 instance Document](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html)   
 
     * FAQ
         * Can I create a dynamic amount of resources?   
@@ -558,3 +568,232 @@ We’ll learn about
     * The stack automatically rolls back to the previous known working state
     * Ability to see in the log what happened and error messages
 
+---
+## Section 11: AWS Monitoring, Troubleshooting & Audit<a name="l11"> ##
+
+### 11.1 Monitoring Overview in AWS<a name="l11-1"> ###
+* Why Monitoring is Important
+    *We know how to deploy applications   
+        * Safely
+        * Automatically
+        * Using Infrastructure as Code
+        * Leveraging the best AWS components!
+    * Our applications are deployed, and our users don’t care how we did it…
+    * Our users only care that the application is working!
+        * Application latency: will it increase over time?
+        * Application outages: customer experience should not be degraded
+        * Users contacting the IT department or complaining is not a good outcome
+        * Troubleshooting and remediation
+    * Internal monitoring: 
+        * Can we prevent issues before they happen? 
+        * Performance and Cost 
+        * Trends (scaling patterns) 
+        * Learning and Improvement
+* Monitoring in AWS 
+    * AWS CloudWatch: 
+        * [Metrics](#l11-2-1): Collect and track key metrics 
+        * [Logs](#l11-2-3): Collect, monitor, analyze and store log files
+        * [Events](#l11-2-4): Send notifications when certain events happen in your AWS
+        * [Alarms](#l11-2-2): React in real-time to metrics / events
+    * AWS X-Ray:
+        * Troubleshooting application performance and errors
+        * Distributed tracing of microservices 
+    * AWS CloudTrail:
+        * Internal monitoring of API calls being made 
+        * Audit changes to AWS Resources by your users
+---
+### 11.2 AWS CloudWatch<a name="l11-2"> ###
+#### 11.2.1 AWS CloudWatch Metrics <a name="l11-2-1"/>
+##### 11.2.1.1 Metrics Overview #####
+* CloudWatch provides metrics for every services in AWS
+* **Metric** is a variable to monitor (CPUUtilization, NetworkIn…) 
+* Metrics belong to **namespaces**
+* **Dimension** is an attribute of a metric (instance id, environment, etc…).
+* Up to 10 dimensions per metric
+* Metrics have **timestamps**
+* Can create CloudWatch dashboards of metrics
+
+##### 11.2.1.2 AWS CloudWatch EC2 Detailed monitoring
+* EC2 instance metrics have metrics “every 5 minutes”
+* With detailed monitoring (for a cost), you get data “every 1 minute”
+* Use detailed monitoring if you want to more prompt scale your ASG! 
+* The AWS Free Tier allows us to have 10 detailed monitoring metrics 
+* Note: EC2 Memory usage is by default not pushed (must be pushed from inside the instance as a custom metric)
+
+##### 11.2.1.3 AWS CloudWatch Custom Metrics
+* Possibility to define and send your own custom metrics to CloudWatch 
+* Ability to use dimensions (attributes) to segment metrics 
+    * Instance.id 
+    * Environment.name
+* Metric resolution:
+    * Standard: 1 minute
+    * High Resolution: up to 1 second (**StorageResolution** API parameter) – Higher cost 
+* Use API call **PutMetricData** 
+* Use exponential back off in case of throttle errors
+
+#### 11.2.2 AWS CloudWatch Alarms<a name="l11-2-2"/>
+
+* Alarms are used to trigger notifications for any metric 
+* Alarms can go to Auto Scaling, EC2 Actions, SNS notifications 
+* Various options (sampling, %, max, min, etc…) 
+* Alarm States: 
+    * OK 
+    * INSUFFICIENT_DATA 
+    * ALARM 
+* Period:
+    * Length of time in seconds to evaluate the metric 
+    * High resolution custom metrics: can only choose 10 sec or 30 sec
+
+#### 11.2.3 AWS CloudWatch Logs<a name="l11-2-3"/>
+
+* Applications can send logs to CloudWatch using the SDK 
+* CloudWatch can collect log from: 
+    * Elastic Beanstalk: collection of logs from application 
+    * ECS: collection from containers 
+    * AWS Lambda: collection from function logs 
+    * VPC Flow Logs: VPC specific logs 
+    * API Gateway 
+    * CloudTrail based on filter 
+    * CloudWatch log agents: for example on EC2 machines 
+    * Route53: Log DNS queries 
+* CloudWatch Logs can go to: 
+    * Batch exporter to S3 for archival 
+    * Stream to ElasticSearch cluster for further analytics
+* CloudWatch Logs can use filter expressions 
+* Logs storage architecture: 
+    * Log groups: arbitrary name, usually representing an application 
+    * Log stream: instances within application / log files / containers 
+* Can define log expiration policies (never expire, 30 days, etc..) 
+* Using the AWS CLI we can tail CloudWatch logs 
+* To send logs to CloudWatch, make sure IAM permissions are correct!
+* Security: encryption of logs using KMS at the Group Level
+
+#### 11.2.4 AWS CloudWatch Events<a name="l11-2-4"/>
+
+* Schedule: Cron jobs 
+* Event Pattern: Event rules to react to a service doing something 
+    * Ex: CodePipeline state changes! 
+* Triggers to Lambda functions, SQS/SNS/Kinesis Messages 
+* CloudWatch Event creates a small JSON document to give information about the change
+
+---
+### 11.3 AWS X-Ray <a name="l11-3"/>
+#### 11.3.1 AWS X-Ray Overview
+* Debugging in Production, the good old way: 
+    * Test locally 
+    * Add log statements everywhere 
+    * Re-deploy in production
+* Log formats differ across applications using CloudWatch and analytics is hard. 
+* Debugging: monolith “easy”, distributed services “hard”
+* No common views of your entire architecture! 
+* Enter… AWS X-Ray!
+
+**Visual analysis of our applications**   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cw-xray-1.png)   
+
+#### 11.3.2 AWS X-Ray Advantages
+* Troubleshooting performance (bottlenecks) 
+* Understand dependencies in a microservice architecture 
+* Pinpoint service issues 
+* Review request behavior 
+* Find errors and exceptions 
+* Are we meeting time SLA? 
+* Where I am throttled? 
+* Identify users that are impacted
+
+#### 11.3.3 X-Ray compatibility
+* AWS Lambda 
+* Elastic Beanstalk 
+* ECS 
+* ELB 
+* API Gateway 
+* EC2 Instances or any application server (even on premise)
+
+#### 11.3.4 AWS X-Ray Leverages Tracing   
+* Tracing is an end to end way to following a “request”
+* Each component dealing with the request adds its own “trace”
+* Tracing is made of segments (+ sub segments) 
+* Annotations can be added to traces to provide extra-information 
+* Ability to trace: 
+    * Every request 
+    * Sample request (as a % for example or a rate per minute) 
+* X-Ray Security: 
+    * IAM for authorization 
+    * KMS for encryption at rest
+    
+#### 11.3.5 AWS X-Ray How to enable it?
+1.  Your code (Java, Python, Go, Node.js, .NET) must import the AWS X-Ray SDK
+    * Very little code modification needed 
+    * The application SDK will then capture: 
+        * Calls to AWS services 
+        * HTTP / HTTPS requests 
+        * Database Calls (MySQL, PostgreSQL, DynamoDB) 
+        * Queue calls (SQS) 
+2. Install the X-Ray daemon or enable X-Ray AWS Integration 
+    * X-Ray daemon works as a low level UDP packet interceptor (Linux / Windows / Mac…) 
+    * AWS Lambda / other AWS services already run the X-Ray daemon for you
+    * Each application must have the IAM rights to write data to X-Ray   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cw-xray-2.png)   
+
+#### 11.3.6 The X-Ray magic
+* X-Ray service collects data from all the different services 
+* Service map is computed from all the segments and traces 
+* X-Ray is graphical, so even non technical people can help troubleshoot   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/cw-xray-1.png) 
+
+#### 11.3.7 AWS X-Ray Troubleshooting
+* If X-Ray is not working on EC2 
+    * Ensure the EC2 IAM Role has the proper permissions 
+    * Ensure the EC2 instance is running the X-Ray Daemon 
+* To enable on AWS Lambda: 
+    * Ensure it has an IAM execution role with proper policy (AWSX-RayWriteOnlyAccess) 
+    * Ensure that X-Ray is imported in the code
+
+#### 11.3.8 X-Ray Additional Exam Tips
+* The X-Ray daemon / agent has a config to send traces cross account: 
+    * make sure the IAM permissions are correct – the agent will assume the role
+    * This allows to have a central account for all your application tracing 
+* Segments: each application / service will send them 
+* Trace: segments collected together to form an end-to-end trace 
+* Sampling: decrease the amount of requests sent to X-Ray, reduce cost
+* Annotations: Key Value pairs used to **index** traces and use with **filters**
+* Metadata: Key Value pairs, **not indexed**, not used for searching   
+</br> 
+* Code must be instrumented to use the AWS X-Ray SDK (interceptors, handlers, http clients) 
+* IAM role must be correct to send traces to X-Ray 
+* X-Ray on EC2 / On-Premise: 
+    * Linux system must run the X-Ray daemon 
+    * IAM instance role if EC2, other AWS credentials on on-premise instance 
+* X-Ray on Lambda: 
+    * Make sure X-Ray integration is ticked on Lambda (Lambda runs the daemon) 
+    * IAM role is lambda role 
+* X-Ray on Beanstalk: 
+    * Set configuration on EB console 
+    * Or use a beanstalk extension (.ebextensions/xray-daemon.config) 
+* X-Ray on ECS / EKS / Fargate (Docker): 
+    * Create a Docker image that runs the Daemon / or use the official X-Ray Docker image 
+    * Ensure port mappings & network settings are correct and IAM task roles are defined
+---
+### 11.4 AWS CloudTrail<a name="l11-4"/>
+* Provides governance, compliance and audit for your AWS Account 
+* CloudTrail is enabled by default! 
+* Get an history of events / API calls made within your AWS Account by:
+    * Console 
+    * SDK 
+    * CLI 
+    * AWS Services 
+* Can put logs from CloudTrail into CloudWatch Logs 
+* If a resource is deleted in AWS, look into CloudTrail first!
+---
+### 11.5 CloudTrail vs CloudWatch vs X-Ray<a name="l11-5"/>
+* CloudTrail: 
+    * Audit API calls made by users / services / AWS console 
+    * Useful to detect unauthorized calls or root cause of changes 
+* CloudWatch: 
+    * CloudWatch Metrics over time for monitoring 
+    * CloudWatch Logs for storing application log 
+    * CloudWatch Alarms to send notifications in case of unexpected metrics 
+* X-Ray: 
+    * Automated Trace Analysis & Central Service Map Visualization 
+    * Latency, Errors and Fault analysis 
+    * Request tracking across distributed systems
