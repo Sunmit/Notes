@@ -748,7 +748,7 @@ We’ll learn about
 * To enable on AWS Lambda: 
     * Ensure it has an IAM execution role with proper policy (AWSX-RayWriteOnlyAccess) 
     * Ensure that X-Ray is imported in the code
-
+   
 #### 11.3.8 X-Ray Additional Exam Tips
 * The X-Ray daemon / agent has a config to send traces cross account: 
     * make sure the IAM permissions are correct – the agent will assume the role
@@ -756,11 +756,10 @@ We’ll learn about
 * Segments: each application / service will send them 
 * Trace: segments collected together to form an end-to-end trace 
 * Sampling: decrease the amount of requests sent to X-Ray, reduce cost
-* Annotations: Key Value pairs used to **index** traces and use with **filters**
+* Annotations: Key Value pairs used to **index** traces and use with **filters**   
 * Metadata: Key Value pairs, **not indexed**, not used for searching   
-</br> 
 * Code must be instrumented to use the AWS X-Ray SDK (interceptors, handlers, http clients) 
-* IAM role must be correct to send traces to X-Ray 
+* IAM role must be correct to send traces to X-Ray    
 * X-Ray on EC2 / On-Premise: 
     * Linux system must run the X-Ray daemon 
     * IAM instance role if EC2, other AWS credentials on on-premise instance 
