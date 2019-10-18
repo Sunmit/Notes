@@ -573,7 +573,7 @@ We’ll learn about
 
 ### 11.1 Monitoring Overview in AWS<a name="l11-1"> ###
 * Why Monitoring is Important
-    *We know how to deploy applications   
+    * We know how to deploy applications   
         * Safely
         * Automatically
         * Using Infrastructure as Code
