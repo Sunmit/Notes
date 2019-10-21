@@ -1,4 +1,4 @@
-# Index #   
+# Index <a name="l0"/>   
 * 9. [Section 9: AWS CI/CD](#l9-aws-cicd)
     * 9.1 [Continuous Integration](#l9-1)
     * 9.2 [Continuous Delivery](#l9-2)
@@ -21,6 +21,12 @@
     * 11.3 [AWS X-Ray](#l11-3)
     * 11.4 [AWS CloudTrail](#l11-4)
     * 11.5 [CloudTrail vs CloudWatch vs X-Ray](#l11-5)
+* 12. [Section 12: AWS Integration & Messaging](#l12)
+    * 12.1 [Section Introduction](#l12-1)
+    * 12.2 [AWS SQS](#l12-2)
+    * 12.3 [AWS SNS](#l12-3)
+    * 12.4 [AWS Kinesis](#l12-4)
+    * 12.5 [SQS vs SNS vs Kinesis](#l12-5)
 ---
 ## Exam  Details
 - Deployment:CI/CD,BeanStalk,Serverless
@@ -796,3 +802,271 @@ We’ll learn about
     * Automated Trace Analysis & Central Service Map Visualization 
     * Latency, Errors and Fault analysis 
     * Request tracking across distributed systems
+---
+## Section 12: AWS Integration & Messaging<a name="l12"/>
+### 12.1 Section Introduction<a name="l12-1"/>
+* When we start deploying multiple applications, they will inevitably need to communicate with one another 
+* There are two patterns of application communication   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-intro-1.png)   
+* Synchronous between applications can be problematic if there are sudden spikes of traffic 
+* What if you need to suddenly encode 1000 videos but usually it’s 10? 
+* In that case, it’s better to decouple your applications, 
+    * using SQS: queue model 
+    * using SNS: pub/sub model 
+    * using Kinesis: real-time streaming model
+* These services can scale independently from our application!
+---
+### 12.2 AWS SQS<a name="l12-2"/>   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-1.png)    
+#### 12.2.1 Standard Queue
+* Oldest offering (over 10 years old) 
+* Fully managed • Scales from 1 message per second to 10,000s per second
+* Default retention of messages: 4 days, maximum of 14 days 
+* No limit to how many messages can be in the queue 
+* Low latency (<10 ms on publish and receive) 
+* Horizontal scaling in terms of number of consumers 
+* Can have duplicate messages (at least once delivery, occasionally) 
+* Can have out of order messages (best effort ordering) 
+* Limitation of 256KB per message sent
+
+#### 12.2.2 Delay Queue
+* Delay a message (consumers don’t see it immediately) up to 15 minutes
+* Default is 0 seconds (message is available right away) 
+* Can set a default at queue level 
+* Can override the default using the **DelaySeconds** parameter
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-2.png) 
+#### 12.2.3 Producing Messages
+* Define Body 
+* Add message attributes (metadata – optional) 
+* Provide Delay Delivery (optional) 
+* Get back 
+* Message identifier 
+* MD5 hash of the body   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-3.png)
+#### 12.2.4 Consuming Messages
+* Consumers…
+* Poll SQS for messages (receive up to 10 messages at a time) 
+* Process the message within the visibility timeout 
+* Delete the message using the message ID & receipt handle   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-4.png)   
+
+#### 12.2.5 Visibility timeout
+* When a consumer polls a message from a queue, the message is “invisible” to other consumers for a defined period… the **Visibility Timeout**: 
+    * Set between 0 seconds and 12 hours (default 30 seconds) 
+    * If too high (15 minutes) and consumer fails to process the message, you must wait a long time before processing the message again 
+    * If too low (30 seconds) and consumer needs time to process the message (2 minutes), another consumer will receive the message and the message will be processed more than once
+* **ChangeMessageVisibility** API to change the visibility while processing a message
+* **DeleteMessage** API to tell SQS the message was successfully processed
+
+#### 12.2.6 Dead Letter Queue
+* If a consumer fails to process a message within the Visibility Timeout…the message goes back to the queue! 
+* We can set a threshold of how many times a message can go back to the queue – it’s called a “redrive policy”
+* After the threshold is exceeded, the message goes into a dead letter queue (DLQ) 
+* We have to create a DLQ first and then designate it dead letter queue 
+* Make sure to process the messages in the DLQ before they expire!    
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-5.png) 
+#### 12.2.7 Long Polling
+* When a consumer requests message from the queue, it can optionally “wait” for messages to arrive if there are none in the queue 
+* This is called Long Polling 
+* **LongPolling decreases the number of API calls made to SQS while increasing the efficiency and latency of your application.**
+* The wait time can be between 1 sec to 20 sec (20 sec preferable) 
+* Long Polling is preferable to Short Polling 
+* Long polling can be enabled at the queue level or at the API level using **WaitTimeSeconds**    
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-6.png)   
+#### 12.2.8 SQS Message consumption flow diagram   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-7.png)   
+#### 12.2.9 AWS SQS – FIFO Queue
+* Newer offering (First In - First out) – not available in all regions! 
+* Name of the queue must end in .fifo 
+* Lower throughput (up to 3,000 per second with batching, 300/s without) 
+* Messages are processed in order by the consumer 
+* Messages are sent exactly once 
+* No per message delay (only per queue delay)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-8.png) 
+
+#### 12.2.10 FIFO - Features   
+* Deduplication: (not send the same message twice) 
+    * Provide a MessageDeduplicationId with your message 
+    * De-duplication interval is 5 minutes 
+    * Content based duplication: the MessageDeduplicationId is generated as the SHA-256 of the message body (not the attributes) 
+* Sequencing: 
+    * To ensure strict ordering between messages, specify a MessageGroupId
+    * Messages with different Group ID may be received out of order 
+    * E.g. to order messages for a user, you could use the ”user_id” as a group id 
+    * Messages with the same Group ID are delivered to one consumer at a time
+
+#### 12.2.11 SQS Extended Client
+* Message size limit is 256KB, how to send large messages? 
+* Using the SQS Extended Client (Java Library)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sqs-9.png)   
+
+#### 12.2.12 AWS SQS Security
+* Encryption in flight using the HTTPS endpoint 
+* Can enable SSE (Server Side Encryption) using KMS 
+    * Can set the CMK (Customer Master Key) we want to use 
+    * Can set the data key reuse period (between 1 minute and 24 hours) 
+        * Lower and KMS API will be used often 
+        * Higher and KMS API will be called less 
+    * SSE only encrypts the body, not the metadata (message ID, timestamp, attributes) 
+* IAM policy must allow usage of SQS 
+* SQS queue access policy 
+    * Finer grained control over IP 
+    * Control over the time the requests come in
+
+#### 12.2.13 SQS – Must know API
+* CreateQueue, DeleteQueue 
+* PurgeQueue: delete all the messages in queue 
+* SendMessage, ReceiveMessage, DeleteMessage 
+* ChangeMessageVisibility: change the timeout 
+* Batch APIs for SendMessage, DeleteMessage, ChangeMessageVisibility helps decrease your costs
+ 
+#### 12.2.14 AWS SQS Use Cases
+* Decouple applications (for example to handle payments asynchronously)
+* Buffer writes to a database (for example a voting application) 
+* Handle large loads of messages coming in (for example an email sender) 
+* SQS can be integrated with Auto Scaling through CloudWatch!
+
+### 12.3 AWS SNS<a name="l12-3"/>
+#### 12.3.1 AWS SNS Overview   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sns-1.png)   
+* The “event producer” only sends message to one SNS topic 
+* As many “event receivers” (subscriptions) as we want to listen to the SNS topic notifications 
+* Each subscriber to the topic will get all the messages (note: new feature to filter messages) 
+* Up to 10,000,000 subscriptions per topic 
+* 100,000 topics limit 
+* Subscribers can be: 
+    * SQS • HTTP / HTTPS (with delivery retries – how many times) 
+    * Lambda 
+    * Emails 
+    * SMS messages 
+    * Mobile Notifications
+#### 12.3.2 SNS integrates with a lot of Amazon Products
+* Some services can send data directly to SNS for notifications 
+* CloudWatch (for alarms) 
+* Auto Scaling Groups notifications 
+* Amazon S3 (on bucket events) 
+* CloudFormation (upon state changes => failed to build, etc) 
+* Etc…
+
+#### 12.3.3 AWS SNS – How to publish
+* Topic Publish (within your AWS Server – using the SDK) 
+    * Create a topic 
+    * Create a subscription (or many) 
+    * Publish to the topic 
+* Direct Publish (for mobile apps SDK) 
+    * Create a platform application 
+    * Create a platform endpoint 
+    * Publish to the platform endpoint 
+    * Works with Google GCM, Apple APNS, Amazon ADM…
+#### 12.3.4 SNS + SQS: Fan Out    
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-sns-2.png)   
+* Push once in SNS, receive in many SQS 
+* Fully decoupled 
+* No data loss 
+* Ability to add receivers of data later 
+* SQS allows for delayed processing 
+* SQS allows for retries of work 
+* May have many workers on one queue and one worker on the other queue
+---
+### 12.4 AWS Kinesis<a name="l12-4"/>
+#### 12.4.1 AWS Kinesis Overview
+* **Kinesis** is a managed alternative to Apache Kafka 
+* Great for application logs, metrics, IoT, clickstreams 
+* Great for “real-time” big data 
+* Great for streaming processing frameworks (Spark, NiFi, etc…) 
+* Data is automatically replicated to 3 AZ 
+
+* **Kinesis Streams**: low latency streaming ingest at scale 
+* **Kinesis Analytics**: perform real-time analytics on streams using SQL 
+* **Kinesis Firehose**: load streams into S3, Redshift, ElasticSearch…   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-1.png)   
+
+#### 12.4.2 Kinesis Streams 
+##### 12.4.2.1 Kinesis Streams Overview
+* Streams are divided in ordered Shards / Partitions   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-2.png)   
+* Data retention is 1 day by default, can go up to 7 days 
+* Ability to reprocess / replay data 
+* Multiple applications can consume the same stream 
+* Real-time processing with scale of throughput 
+* Once data is inserted in Kinesis, it can’t be deleted (immutability)
+
+##### 12.4.2.2 Kinesis Streams Shards
+* One stream is made of many different shards 
+* 1MB/s or 1000 messages/s at write PER SHARD 
+* 2MB/s at read PER SHARD 
+* Billing is per shard provisioned, can have as many shards as you want
+* Batching available or per message calls. 
+* The number of shards can evolve over time (reshard / merge) 
+* **Records are ordered per shard**    
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-3.png)   
+#### 12.3.3 AWS Kinesis API
+##### 12.3.3.1 AWS Kinesis API – Put records
+* PutRecord API + Partition key that gets hashed 
+* The same key goes to the same partition (helps with ordering for a specific key) 
+* Messages sent get a “sequence number”
+* Choose a partition key that is highly distributed (helps prevent “hot partition”) 
+    * user_id if many users 
+    * Not country_id if 90% of the users are in one country 
+* Use Batching with PutRecords to reduce costs and increase throughput 
+* **ProvisionedThroughputExceeded** if we go over the limits 
+* Can use CLI, AWS SDK, or producer libraries from various frameworks   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-4.png)    
+##### 12.4.3.2 AWS Kinesis API – Exceptions
+* ProvisionedThroughputExceeded Exceptions 
+    * Happens when sending more data (exceeding MB/s or TPS for any shard
+    * Make sure you don’t have a hot shard (such as your partition key is bad and too much data goes to that partition) 
+* Solution: 
+    * Retries with backoff 
+    * Increase shards (scaling) 
+    * Ensure your partition key is a good one
+##### 12.4.3.3 AWS Kinesis API – Consumers
+* Can use a normal consumer (CLI, SDK, etc…) 
+* Can use Kinesis Client Library (in Java, Node, Python, Ruby, .Net) 
+    * KCL uses DynamoDB to checkpoint offsets 
+    * KCL uses DynamoDB to track other workers and share the work amongst shards   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-5.png)   
+
+##### 12.4.3.4 Kinesis KCL in Depth
+* Kinesis Client Library (KCL) is Java library that helps read record from a Kinesis Streams with distributed applications sharing the read workload 
+* **Rule: each shard is be read by only one KCL instance** 
+* Means 4 shards = max 4 KCL instances 
+* Means 6 shards = max 6 KCL instances 
+* Progress is checkpointed into DynamoDB (need IAM access) 
+* KCL can run on EC2, Elastic Beanstalk, on Premise Application 
+* **Records are read in order at the shard level**
+KCL Example: 4 shards    
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-6.png)   
+KCL Example: 4 shards, scaling KCL app   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-7.png)   
+KCL Example: 6 shards, scaling Kinesis   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-8.png)    
+KCL Example: 6 shards, scaling KCL   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-kinesis-9.png)   
+##### 12.3.3.5 Kinesis Security
+* Control access / authorization using IAM policies 
+* Encryption in flight using HTTPS endpoints 
+* Encryption at rest using KMS 
+* Possibility to encrypt / decrypt data client side (harder) 
+* VPC Endpoints available for Kinesis to access within VPC   
+#### 12.4.4 AWS Kinesis Data Analytics
+* Perform real-time analytics on Kinesis Streams using SQL 
+* Kinesis Data Analytics: 
+* Auto Scaling 
+* Managed: no servers to provision 
+* Continuous: real time 
+* Pay for actual consumption rate 
+* Can create streams out of the real-time queries   
+#### 12.4.5 AWS Kinesis Firehose
+* Fully Managed Service, no administration 
+* Near Real Time (60 seconds latency) 
+* Load data into Redshift / Amazon S3 / ElasticSearch / Splunk 
+* Automatic scaling 
+* Support many data format (pay for conversion) 
+* Pay for the amount of data going through Firehose
+### 12.5 SQS vs SNS vs Kinesis<a name="l12-5"/>   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-vs-1.png)    
+
+---
+## [BACK TO TOP](#l0)
+---
