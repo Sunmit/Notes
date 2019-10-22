@@ -27,6 +27,20 @@
     * 12.3 [AWS SNS](#l12-3)
     * 12.4 [AWS Kinesis](#l12-4)
     * 12.5 [SQS vs SNS vs Kinesis](#l12-5)
+* 13. [Section 13: AWS Lambda](#l13)
+    * 13.1 [Section Overview](#l13-1)
+    * 13.2 [Lambda Overview](#l13-2)
+    * 13.3 [AWS Lambda Configuration](#l13-3)
+    * 13.4 [AWS Lambda Concurrency and Throttling](#l13-4)
+    * 13.5 [AWS Lambda Logging, Monitoring and Tracing](#l13-5)
+    * 13.6 [AWS Lambda Limits to Know](#l13-6)
+    * 13.7 [AWS Lambda Versions](#l13-7)
+    * 13.8 [AWS Lambda Aliases](#l13-8)
+    * 13.9 [Lambda Function Dependencies](#l13-9)
+    * 13.10 [Lambda and CloudFormation](#l13-10)
+    * 13.11 [Lambda Functions /tmp space](#l13-11)
+    * 13.12 [AWS Lambda Best Practices](#l13-12)
+    * 13.13 [Lambda@Edge](#l13-13)
 ---
 ## Exam  Details
 - Deployment:CI/CD,BeanStalk,Serverless
@@ -1066,7 +1080,201 @@ KCL Example: 6 shards, scaling KCL
 * Pay for the amount of data going through Firehose
 ### 12.5 SQS vs SNS vs Kinesis<a name="l12-5"/>   
 ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/im-vs-1.png)    
+---
+## Section 13 AWS Lambda<a name="l13"/>
+### 13.1 Section Overview <a name="l13-1"/>
+**What’s serverless?** 
+* Serverless is a new paradigm in which the developers don’t have to manage servers anymore… 
+* They just deploy code 
+* They just deploy… functions ! 
+* Initially... Serverless == FaaS (Function as a Service) 
+* Serverless was pioneered by AWS Lambda but now also includes anything that’s managed: “databases, messaging, storage, etc.”   
+* **Serverless does not mean there are no servers…**   
+   it means you just don’t manage / provision / see them
 
+**Serverless in AWS**
+* AWS Lambda & Step Functions 
+* DynamoDB 
+* AWS Cognito 
+* AWS API Gateway 
+* Amazon S3 
+* AWS SNS & SQS 
+* AWS Kinesis 
+* Aurora Serverless   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-1.png)   
+---
+### 13.2 Lambda Overview<a name="l13-2"/>
+**Why AWS Lambda**   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-2.png)   
+
+**Benefits of AWS Lambda**
+* Easy Pricing: 
+* Pay per request and compute time 
+* Free tier of 1,000,000 AWS Lambda requests and 400,000 GBs of compute time
+* Integrated with the whole AWS Stack 
+* Integrated with many programming languages 
+* Easy monitoring through AWS CloudWatch 
+* Easy to get more resources per functions (up to 3GB of RAM!) 
+* Increasing RAM will also improve CPU and network!
+
+**AWS Lambda language support**
+* Node.js (JavaScript) 
+* Python 
+* Java (Java 8 compatible) 
+* C# (.NET Core) 
+* Golang 
+* C# / Powershell
+
+**AWS Lambda Integrations Main ones**   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-3.png)   
+**Example: Serverless Thumbnail creation**   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-4.png)   
+**Example: Serverless CRON Job**   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-5.png)    
+**AWS Lambda Pricing (as of June 2018, us-east-1 region)**
+* You can find overall pricing information here: https://aws.amazon.com/lambda/pricing/ 
+* Pay per **calls**: 
+    * First 1,000,000 requests are free 
+    * $0.20 per 1 million requests thereafter ($0.0000002 per request) 
+* Pay per **duration**: (in increment of 100ms) 
+    * 400,000 GB-seconds of compute time per month if FREE 
+    * == 400,000 seconds if function is 1GB RAM 
+    * == 3,200,000 seconds if function is 128 MB RAM 
+    * After that $1.00 for 600,000 GB-seconds 
+* It is usually very cheap to run AWS Lambda so it’s very popular
+---
+### 13.3 AWS Lambda Configuration<a name= "l13-3"/>
+* Configuration
+    * Timeout: default 3 seconds, max of 300s (Note: new limit 15 minutes) 
+    * Environment variables 
+    * Allocated memory (128M to 3G) 
+    * Ability to deploy within a VPC + assign security groups 
+    * IAM execution role must be attached to the Lambda function  
+---
+### 13.4 AWS Lambda Concurrency and Throttling<a name= "l13-4"/>
+* Concurrency   
+    * Concurrency: up to 1000 executions (can be increased through ticket)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-config-1.png)   
+    * Can set a “reserved concurrency” at the function level 
+    * Each invocation over the concurrency limit will trigger a “Throttle”
+    * Throttle behavior: 
+        * If synchronous invocation => return ThrottleError - 429 
+        * If asynchronous invocation => retry automatically and then go to DLQ
+* AWS Lambda Retries and DLQ
+    * If a lambda function asynchronous invocation fails, it will be retried twice
+    * After all retries, unprocessed events go to the Dead Letter Queue 
+    * DLQ can be a SNS topic or SQS queue    
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-config-2.png)
+    * The original event payload is sent to the DLQ 
+    * This is an easy way to debug what’s wrong with your functions in production without changing the code 
+    * Make sure the IAM execution role is correct for your Lambda function asynchronous trigger Retry loop
+---
+### 13.5 AWS Lambda Logging, Monitoring and Tracing<a name= "l13-5"/>
+* CloudWatch: 
+    * AWS Lambda execution logs are stored in AWS CloudWatch Logs 
+    * AWS Lambda metrics are displayed in AWS CloudWatch Metrics 
+    * Make sure your AWS Lambda function has an execution role with an IAM policy that authorizes writes to CloudWatch 
+* X-Ray: 
+    * It’s possible to trace Lambda with X-Ray 
+    * Enable in Lambda configuration (runs the X-Ray daemon for you) 
+    * Use AWS SDK in Code 
+    * Ensure Lambda Function has correct IAM Execution Role
+---
+### 13.6 AWS Lambda Limits to Know<a name= "l13-6"/>
+* Execution: 
+    * Memory allocation: 128 MB – 3008 MB (64 MB increments) 
+    * Maximum execution time: 300 seconds (5 minutes), now 15 minutes but 5 for exam 
+    * Disk capacity in the “function container” (in /tmp): 512 MB
+    * Concurrency limits: 1000 
+* Deployment: 
+    * Lambda function deployment size (compressed .zip): 50 MB 
+    * Size of uncompressed deployment (code + dependencies): 250 MB 
+    * Can use the /tmp directory to load other files at startup 
+    * Size of environment variables: 4 KB
+---
+### 13.7 AWS Lambda Versions<a name= "l13-7"/>
+* When you work on a Lambda function, we work on **$LATEST** 
+* When we’re ready to publish a Lambda function, we create a version
+* Versions are immutable
+* Versions have increasing version numbers 
+* Versions get their own ARN (Amazon Resource Name) 
+* Version = code + configuration (nothing can be changed - immutable) 
+* Each version of the lambda function can be accessed   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-version-1.png)   
+
+### 13.8 AWS Lambda Aliases<a name= "l13-8"/>
+* Aliases are ”pointers” to Lambda function versions 
+* We can define a “dev”, ”test”, “prod” aliases and have them point at different lambda versions 
+* Aliases are mutable 
+* Aliases enable Blue / Green deployment by assigning weights to lambda functions 
+* Aliases enable stable configuration of our event triggers / destinations 
+* Aliases have their own ARNs   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-aliases-1.png)  
+---
+### 13.9 Lambda Function Dependencies<a name= "l13-9"/>
+* If your Lambda function depends on external libraries: for example AWS X-Ray SDK, Database Clients, etc…
+* **You need to install the packages alongside your code and zip it together**
+    * For Node.js, use npm & “node_modules” directory 
+    * For Python, use pip --target options 
+    * For Java, include the relevant .jar files 
+* Upload the **zip** straight to Lambda if less than 50MB, else to S3 first 
+* Native libraries work: they need to be compiled on Amazon Linux
+---
+### 13.10 Lambda and CloudFormation<a name= "l13-10"/>
+* You must store the Lambda zip in S3 
+* You must refer the S3 zip location in the CloudFormation code   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-cf-1.png)   
+
+### 13.11 Lambda Functions /tmp space<a name= "l13-11"/>
+* If your Lambda function needs to download a big file to work…
+* If your Lambda function needs disk space to perform operations…
+* You can use the /tmp directory • Max size is 512MB 
+* The directory content remains when the execution context is frozen, providing transient cache that can be used for multiple invocations (helpful to checkpoint your work) 
+* For permanent persistence of object (non temporary), use S3
+
+### 13.12 AWS Lambda Best Practices<a name= "l13-12"/>
+* **Perform heavy-duty work outside of your function handler** 
+    * Connect to databases outside of your function handler
+    * Initialize the AWS SDK outside of your function handler 
+    * Pull in dependencies or datasets outside of your function handler 
+* **Use environment variables for:** 
+    * Database Connection Strings, S3 bucket, etc… do not put these values directly in your code 
+    * Passwords, sensitive values… they can be encrypted using KMS
+* **Minimize your deployment package size to its runtime necessities.**
+    * Break down the function if need be 
+    * Remember the AWS Lambda limits
+* **Avoid using recursive code, never have a Lambda function call itself**
+* **Don't put your Lambda function in a VPC unless you have to**
+---
+### 13.13 Lambda@Edge<a name= "l13-13"/>
+* You have deployed a CDN using CloudFront 
+* What if you wanted to run a global AWS Lambda alongside? 
+* Or how to implement request filtering before reaching your application? 
+* For this, you can use Lambda@Edge: deploy Lambda functions alongside your CloudFront CDN 
+    * Build more responsive applications 
+    * You don’t manage servers, Lambda is deployed globally 
+    * Customize the CDN content 
+    * Pay only for what you use
+* You can use Lambda to change CloudFront requests and responses: 
+    * After CloudFront receives a request from a viewer (viewer request)
+    * Before CloudFront forwards the request to the origin (origin request)
+    * After CloudFront receives the response from the origin (origin response) 
+    * Before CloudFront forwards the response to the viewer (viewer response)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-edge-1.png)   
+* You can also generate responses to viewers without ever sending the request to the origin   
+**Global application**   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-edge-2.png)  
+**Use Cases**
+* Website Security and Privacy 
+* Dynamic Web Application at the Edge 
+* Search Engine Optimization (SEO) 
+* Intelligently Route Across Origins and Data Centers 
+* Bot Mitigation at the Edge 
+* Real-time Image Transformation 
+* A/B Testing 
+* User Authentication and Authorization 
+* User Prioritization 
+* User Tracking and Analytics
 ---
 ## [BACK TO TOP](#l0)
 ---
