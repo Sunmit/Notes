@@ -1101,11 +1101,11 @@ KCL Example: 6 shards, scaling KCL
 * AWS SNS & SQS 
 * AWS Kinesis 
 * Aurora Serverless   
-![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-1.png)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-1.jpg)   
 ---
 ### 13.2 Lambda Overview<a name="l13-2"/>
 **Why AWS Lambda**   
-![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-2.png)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-2.jpg)   
 
 **Benefits of AWS Lambda**
 * Easy Pricing: 
@@ -1126,11 +1126,11 @@ KCL Example: 6 shards, scaling KCL
 * C# / Powershell
 
 **AWS Lambda Integrations Main ones**   
-![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-3.png)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-3.jpg)   
 **Example: Serverless Thumbnail creation**   
-![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-4.png)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-4.jpg)   
 **Example: Serverless CRON Job**   
-![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-5.png)    
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-intro-5.jpg)    
 **AWS Lambda Pricing (as of June 2018, us-east-1 region)**
 * You can find overall pricing information here: https://aws.amazon.com/lambda/pricing/ 
 * Pay per **calls**: 
@@ -1154,7 +1154,7 @@ KCL Example: 6 shards, scaling KCL
 ### 13.4 AWS Lambda Concurrency and Throttling<a name= "l13-4"/>
 * Concurrency   
     * Concurrency: up to 1000 executions (can be increased through ticket)   
-    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-config-1.png)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-config-1.jpg)   
     * Can set a “reserved concurrency” at the function level 
     * Each invocation over the concurrency limit will trigger a “Throttle”
     * Throttle behavior: 
@@ -1164,7 +1164,7 @@ KCL Example: 6 shards, scaling KCL
     * If a lambda function asynchronous invocation fails, it will be retried twice
     * After all retries, unprocessed events go to the Dead Letter Queue 
     * DLQ can be a SNS topic or SQS queue    
-    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-config-2.png)
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-config-2.jpg)
     * The original event payload is sent to the DLQ 
     * This is an easy way to debug what’s wrong with your functions in production without changing the code 
     * Make sure the IAM execution role is correct for your Lambda function asynchronous trigger Retry loop
@@ -1200,7 +1200,7 @@ KCL Example: 6 shards, scaling KCL
 * Versions get their own ARN (Amazon Resource Name) 
 * Version = code + configuration (nothing can be changed - immutable) 
 * Each version of the lambda function can be accessed   
-    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-version-1.png)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-version-1.jpg)   
 
 ### 13.8 AWS Lambda Aliases<a name= "l13-8"/>
 * Aliases are ”pointers” to Lambda function versions 
@@ -1209,7 +1209,7 @@ KCL Example: 6 shards, scaling KCL
 * Aliases enable Blue / Green deployment by assigning weights to lambda functions 
 * Aliases enable stable configuration of our event triggers / destinations 
 * Aliases have their own ARNs   
-    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-aliases-1.png)  
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-aliases-1.jpg)  
 ---
 ### 13.9 Lambda Function Dependencies<a name= "l13-9"/>
 * If your Lambda function depends on external libraries: for example AWS X-Ray SDK, Database Clients, etc…
@@ -1223,7 +1223,7 @@ KCL Example: 6 shards, scaling KCL
 ### 13.10 Lambda and CloudFormation<a name= "l13-10"/>
 * You must store the Lambda zip in S3 
 * You must refer the S3 zip location in the CloudFormation code   
-    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-cf-1.png)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-cf-1.jpg)   
 
 ### 13.11 Lambda Functions /tmp space<a name= "l13-11"/>
 * If your Lambda function needs to download a big file to work…
@@ -1260,10 +1260,10 @@ KCL Example: 6 shards, scaling KCL
     * Before CloudFront forwards the request to the origin (origin request)
     * After CloudFront receives the response from the origin (origin response) 
     * Before CloudFront forwards the response to the viewer (viewer response)   
-    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-edge-1.png)   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-edge-1.jpg)   
 * You can also generate responses to viewers without ever sending the request to the origin   
 **Global application**   
-    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-edge-2.png)  
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lambda-edge-2.jpg)  
 **Use Cases**
 * Website Security and Privacy 
 * Dynamic Web Application at the Edge 
