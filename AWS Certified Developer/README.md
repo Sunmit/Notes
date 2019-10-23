@@ -41,6 +41,20 @@
     * 13.11 [Lambda Functions /tmp space](#l13-11)
     * 13.12 [AWS Lambda Best Practices](#l13-12)
     * 13.13 [Lambda@Edge](#l13-13)
+* 14. [Section 14: DynamoDB](#l14)
+    * 14.1 [Overview](#l14-1)
+    * 14.2 [DynamoDB Intro](#l14-2)
+    * 14.3 [DynamoDB – Primary Keys](#l14-3)
+    * 14.4 [DynamoDB WCU&RCU-Provisioned Throughput](#l14-4)
+    * 14.5 [DynamoDB Basic APIs](#l14-5)
+    * 14.6 [DynamoDB – Indexs (GSI+LSI)](#l14-6)
+    * 14.7 [DynamoDB Concurrency](#l14-7)
+    * 14.8 [DynamoDB - DAX](#l14-8)
+    * 14.9 [DynamoDB Streams](#l14-9)
+    * 14.10 [DynamoDB -TTL (Time to Live)](#l14-10)
+    * 14.11 [DynamoDB CLI – Good to Know](#l14-11)
+    * 14.12 [DynamoDB Transactions](#l14-12)
+    * 14.13 [DynamoDB – Security & Other Features](#l14-13)
 ---
 ## Exam  Details
 - Deployment:CI/CD,BeanStalk,Serverless
@@ -1275,6 +1289,280 @@ KCL Example: 6 shards, scaling KCL
 * User Authentication and Authorization 
 * User Prioritization 
 * User Tracking and Analytics
+---
+## Section 14: DynamoDB<a name="l14"/>
+### 14.1 Overview<a name="l14-1"/>
+**Traditional Architecture**   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-intro-1.jpg)   
+* Traditional applications leverage RDBMS databases 
+* These databases have the SQL query language 
+* Strong requirements about how the data should be modeled 
+* Ability to do join, aggregations, computations 
+* Vertical scaling (means usually getting a more powerful CPU / RAM / IO)   
+**NoSQL databases**
+* NoSQL databases are non-relational databases and are distributed 
+* NoSQL databases include MongoDB, DynamoDB, etc.
+* NoSQL databases do not support join 
+* All the data that is needed for a query is present in one row 
+* NoSQL databases don’t perform aggregations such as “SUM”
+* NoSQL databases scale **horizontally** 
+* There’s no “right or wrong” for NoSQL vs SQL, they just require to model the data differently and think about user queries differently
+---
+### 14.2 DynamoDB Intro<a name="l14-2"/>
+* Fully Managed, Highly available with replication across 3 AZ 
+* NoSQL database - not a relational database 
+* Scales to massive workloads, distributed database 
+* Millions of requests per seconds, trillions of row, 100s of TB of storage
+* Fast and consistent in performance (low latency on retrieval) 
+* Integrated with IAM for security, authorization and administration 
+* Enables event driven programming with DynamoDB Streams 
+* Low cost and auto scaling capabilities   
+**Basics**   
+* DynamoDB is made of tables 
+* Each table has a primary key (must be decided at creation time) 
+* Each table can have an infinite number of items (= rows) 
+* Each item has attributes (can be added over time – can be null) 
+* Maximum size of a item is 400KB 
+* Data types supported are: 
+    * Scalar Types: String, Number, Binary, Boolean, Null 
+    * Document Types: List, Map 
+    * Set Types: String Set, Number Set, Binary Set   
+---
+### 14.3 DynamoDB – Primary Keys<a name="l14-3"/>
+* **Option 1: Partition key only (HASH)** 
+* Partition key must be unique for each item 
+* Partition key must be “diverse” so that the data is distributed 
+* Example: user_id for a users table   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-pk-1.jpg)   
+* **Option 2: Partition key + Sort Key** 
+* The combination must be unique 
+* Data is grouped by partition key 
+* Sort key == range key 
+* Example: users-games table 
+    * user_id for the partition key 
+    * game_id for the sort key   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-pk-2.jpg)    
+**Partition Keys exercise**
+* We’re building a movie database 
+* What is the best partition key to maximize data distribution? 
+    * movie_id • producer_name 
+    * leader_actor_name • movie_language 
+* movie_id has the highest cardinality so it’s a good candidate
+* movie_language doesn’t take many values and may be skewed towards English so it’s not a great partition key
+---
+### 14.4 DynamoDB WCU&RCU-Provisioned Throughput<a name="l14-4"/>
+**Provisioned Throughput**
+* Table must have provisioned read and write capacity units 
+* **Read Capacity Units (RCU)**: throughput for reads 
+* **Write Capacity Units (WCU)**: throughput for writes 
+* Option to setup auto-scaling of throughput to meet demand 
+* Throughput can be exceeded temporarily using “burst credit”
+* If burst credit are empty, you’ll get a “ProvisionedThroughputException”.
+* It’s then advised to do an exponential back-off retry   
+**Write Capacity Units**   
+* One write capacity unit represents one write per second for an item up to **1 KB** in size. 
+* If the items are larger than **1 KB**, more WCU are consumed 
+* **Example 1**: we write 10 objects per seconds of 2 KB each. 
+    * We need 2 * 10 = 20 WCU 
+* **Example 2**: we write 6 objects per second of 4.5 KB each 
+    * We need 6 * 5 = 30 WCU  (4.5 gets rounded to the upper KB) 
+* **Example 3**: we write 120 objects per minute of 2 KB each 
+    * We need 120 / 60 * 2 = 4 WCU    
+**Strongly Consistent Read vs Eventually Consistent Read**
+* **Eventually Consistent Read**: If we read just after a write, it’s possible we’ll get unexpected response because of replication 
+* **Strongly Consistent Read**: If we read just after a write, we will get the correct data 
+* **By default**: DynamoDB uses Eventually Consistent Reads, but GetItem, Query & Scan provide a “ConsistentRead” parameter you can set to True   
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-rcu-1.jpg)      
+**Read Capacity Units**
+* One read capacity unit represents one strongly consistent read per second, or two eventually consistent reads per second, for an item up to 4 KB in size. 
+* If the items are larger than 4 KB, more RCU are consumed 
+* **Example 1**: 10 strongly consistent reads per seconds of 4 KB each 
+    * We need 10 * 4 KB / 4 KB = 10 RCU 
+* **Example 2**: 16 eventually consistent reads per seconds of 12 KB each 
+    * We need (16 / 2) * ( 12 / 4 ) = 24 RCU 
+* **Example 3**: 10 strongly consistent reads per seconds of 6 KB each 
+    * We need 10 * 8 KB / 4 = 20 RCU (we have to round up 6 KB to 8 KB)   
+**Partitions Internal**
+* Data is divided in partitions 
+* Partition keys go through a hashing algorithm to know to which partition they go to 
+* To compute the number of partitions: 
+    * By capacity: (TOTAL RCU / 3000) + (TOTAL WCU / 1000) 
+    * By size: Total Size / 10 GB 
+    * Total partitions = CEILING(MAX(Capacity, Size)) 
+* **WCU and RCU are spread evenly between partitions**   
+
+**DynamoDB -Throttling**   
+* If we exceed our RCU or WCU, we get   
+**ProvisionedThroughputExceededExceptions**
+* Reasons: 
+    * Hot keys: one partition key is being read too many times (popular item for ex) 
+    * Hot partitions: 
+    * Very large items: remember RCU and WCU depends on size of items 
+* Solutions: 
+    * Exponential back-off when exception is encountered (already in SDK)
+    * Distribute partition keys as much as possible 
+    * If RCU issue, we can use DynamoDB Accelerator (DAX)
+---
+### 14.5 DynamoDB Basic APIs<a name="l14-5"/>
+**DynamoDB – Writing Data**   
+* **PutItem** - Write data to DynamoDB  (create data or full replace)
+    * Consumes WCU 
+* **UpdateItem** – Update data in DynamoDB (partial update of attributes)
+    * Possibility to use Atomic Counters and increase them 
+* **Conditional Writes**: 
+    * Accept a write / update only if conditions are respected, otherwise reject 
+    * Helps with concurrent access to items 
+    * No performance impact   
+**DynamoDB – Deleting Data**
+* **DeleteItem** 
+    * Delete an individual row 
+    * Ability to perform a conditional delete 
+* **DeleteTable** 
+    * Delete a whole table and all its items 
+    * Much quicker deletion than calling DeleteItem on all items     
+    
+**DynamoDB – Batching Writes**
+* **BatchWriteItem** 
+    * Up to 25 PutItem and / or DeleteItem in one call 
+    * Up to 16 MB of data written 
+    * Up to 400 KB of data per item 
+* Batching allows you to save in latency by reducing the number of API calls done against DynamoDB 
+* Operations are done in parallel for better efficiency 
+* It’s possible for part of a batch to fail, in which case we have the try the failed items (using exponential back-off algorithm)   
+**DynamoDB – Reading Data**   
+* **GetItem**: 
+    * Read based on Primary key 
+    * Primary Key = HASH or HASH-RANGE 
+    * Eventually consistent read by default 
+    * Option to use strongly consistent reads (more RCU - might take longer)
+    * ProjectionExpression can be specified to include only certain attributes 
+* **BatchGetItem**: 
+    * Up to 100 items 
+    * Up to 16 MB of data 
+    * Items are retrieved in parallel to minimize latency   
+**DynamoDB – Query**
+* Query returns items based on: 
+    * PartitionKey value (must be = operator) 
+    * SortKey value (=, <, <=, >, >=, Between, Begin) – optional
+    * FilterExpression to further filter (client side filtering)
+* Returns: 
+    * Up to 1 MB of data 
+    * Or number of items specified in Limit
+* Able to do pagination on the results
+* Can query table, a local secondary index, or a global secondary index   
+**DynamoDB - Scan**   
+* **Scan** the entire table and then filter out data (inefficient) 
+* Returns up to 1 MB of data – use pagination to keep on reading 
+* Consumes a lot of RCU 
+* Limit impact using Limit or reduce the size of the result and pause
+* For faster performance, use parallel scans: 
+    * Multiple instances scan multiple partitions at the same time
+    * Increases the throughput and RCU consumed
+    * Limit the impact of parallel scans just like you would for Scans
+* Can use a ProjectionExpression + FilterExpression (no change to RCU)
+---   
+### 14.6 DynamoDB – Indexs (GSI+LSI)<a name="l14-6"/>
+**DynamoDB – LSI (Local Secondary Index)**
+* Alternate range key for your table, local to the hash key 
+* Up to five local secondary indexes per table.
+* The sort key consists of exactly one scalar attribute.
+* The attribute that you choose must be a scalar String, Number, or Binary
+* **LSI must be defined at table creation time**      
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-index-1.jpg)    
+**DynamoDB – GSI (Global Secondary Index)**   
+* To speed up queries on non-key attributes, use a Global Secondary Index
+* GSI = partition key + optional sort key 
+* The index is a new “table” and we can project attributes on it 
+    * The partition key and sort key of the original table are always projected (KEYS_ONLY) 
+    * Can specify extra attributes to project (INCLUDE) 
+    * Can use all attributes from main table (ALL) 
+* Must define RCU / WCU for the index 
+* Possibility to add / modify GSI (not LSI)
+    ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-index-2.jpg)    
+**DynamoDB Indexes and Throttling**
+* GSI: 
+    * **If the writes are throttled on the GSI, then the main table will be throttled!** 
+    * Even if the WCU on the main tables are fine 
+    * Choose your GSI partition key carefully! 
+    * Assign your WCU capacity carefully! 
+* LSI: 
+    * Uses the WCU and RCU of the main table 
+    * No special throttling considerations   
+---
+### 14.7 DynamoDB Concurrency<a name="l14-7"/>
+* DynamoDB has a feature called “Conditional Update / Delete”
+* That means that you can ensure an item hasn’t changed before altering it
+* That makes DynamoDB an optimistic locking / concurrency database   
+ ![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-concurrency-1.jpg)   
+---
+### 14.8 DynamoDB - DAX<a name="l14-8"/>
+* DAX = DynamoDB Accelerator 
+* Seamless cache for DynamoDB, no application re- write 
+* Writes go through DAX to DynamoDB 
+* Micro second latency for cached reads & queries 
+* Solves the Hot Key problem (too many reads) 
+* 5 minutes TTL for cache by default 
+* Up to 10 nodes in the cluster 
+* Multi AZ (3 nodes minimum recommended for production) 
+* Secure (Encryption at rest with KMS, VPC, IAM, CloudTrail…)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-dax-1.jpg)   
+---
+### 14.9 DynamoDB Streams<a name="l14-9"/>
+* Changes in DynamoDB (Create, Update, Delete) can end up in a DynamoDB Stream 
+* This stream can be read by AWS Lambda, and we can then do: 
+    * React to changes in real time (welcome email to new users) 
+    * Analytics 
+    * Create derivative tables / views 
+    * Insert into ElasticSearch 
+* Could implement cross region replication using Streams • Stream has 24 hours of data retention   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-stream-1.jpg)   
+---
+### 14.10 DynamoDB -TTL (Time to Live)<a name="l14-10"/>
+* TTL = automatically delete an item after an expiry date / time 
+* TTL is provided at no extra cost, deletions do not use WCU / RCU 
+* TTL is a background task operated by the DynamoDB service itself 
+* Helps reduce storage and manage the table size over time 
+* Helps adhere to regulatory norms 
+* TTL is enabled per row (you define a TTL column, and add a date there) 
+* DynamoDB typically deletes expired items within 48 hours of expiration 
+* Deleted items due to TTL are also deleted in GSI / LSI 
+* DynamoDB Streams can help recover expired items
+### 14.11 DynamoDB CLI – Good to Know<a name="l14-11"/>
+* --projection-expression : attributes to retrieve 
+* --filter-expression : filter results 
+* General CLI pagination options including DynamoDB / S3: 
+    * Optimization: 
+        * --page-size : full dataset is still received but each API call will request less data (helps avoid timeouts) 
+    * Pagination: 
+        * --max-items : max number of results returned by the CLI. Returns NextToken 
+        * --starting-token: specify the last received NextToken to keep on reading
+---
+### 14.12 DynamoDB Transactions<a name="l14-12"/>
+* New feature from November 2018 
+* Transaction = Ability to Create / Update / Delete multiple rows in different tables at the same time 
+* It’s an “all or nothing” type of operation. 
+* Write Modes: Standard, Transactional 
+* Read Modes: Eventual Consistency, Strong Consistency, Transactional 
+* Consume 2x of WCU / RCU   
+AccountBalanceTable     
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-transaction-1.jpg)  
+BankTransactionsTable
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/dynamodb-transaction-2.jpg)   
+A transaction is a write to both table, or none!
+---
+### 14.13 DynamoDB – Security & Other Features<a name="l14-13"/>
+* Security: 
+    * VPC Endpoints available to access DynamoDB without internet 
+    * Access fully controlled by IAM 
+    * Encryption at rest using KMS 
+    * Encryption in transit using SSL / TLS 
+* Backup and Restore feature available 
+    * Point in time restore like RDS 
+    * No performance impact 
+* Global Tables 
+    * Multi region, fully replicated, high performance 
+* Amazon DMS can be used to migrate to DynamoDB (from Mongo, Oracle, MySQL, S3, etc…) 
+* You can launch a local DynamoDB on your computer for development purposes
 ---
 ## [BACK TO TOP](#l0)
 ---
