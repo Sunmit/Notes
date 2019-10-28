@@ -1,4 +1,6 @@
-# Index <a name="l0"/>   
+# Index <a name="l0"/>
+* 3. [Section 3: AWS Fundamentals-IAM&EC2](#l3)
+* 4. [Section 4: AWS Fundamentals – Load Balancing, Auto Scaling Groups and EBS Volumes](#l4)
 * 9. [Section 9: AWS CI/CD](#l9-aws-cicd)
     * 9.1 [Continuous Integration](#l9-1)
     * 9.2 [Continuous Delivery](#l9-2)
@@ -63,16 +65,355 @@
 - Refactoring:Understand all the AWS services for the best migration
 - Monitoring and trouble shooting:CloudWatch, CloudTrail, X-Ray
 
-## Install Apache
-### command
+---
+## Section 3: AWS Fundamentals-IAM&EC2<a name="l3"/>
+### 3.1 AWS Regions
+* AWS has regions all around the world (us-east-1) 
+* Each region has availability zones (us- east-1a, us-east-1b…) 
+* Each availability zone is a physical data center in the region, but separate from the other ones (so that they’re isolated from disasters) 
+* AWS Consoles are region scoped (except IAM, S3 & Route53)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/aws-regions-1.jpg)   
+---
+### 3.2 IAM 
+### 3.2.1 IAM Introduction
+* IAM (Identity and Access Management) 
+* Your whole AWS security is there: 
+    * Users 
+    * Groups 
+    * Roles 
+* Root account should never be used (and shared) 
+* Users must be created with proper permissions 
+* IAM is at the center of AWS 
+* Policies are written in JSON (JavaScript Object Notation)      
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/iam-1.jpg)    
+* IAM has a **global** view 
+* Permissions are governed by Policies (JSON) 
+* MFA (Multi Factor Authentication) can be setup 
+* IAM has predefined “managed policies”
+* We’ll see IAM policies in details in the future 
+* It’s best to give users the minimal amount of permissions they need to perform their job (least privilege principles)   
+---
+#### 3.2.2 IAM Federation
+* Big enterprises usually integrate their own repository of users with IAM 
+* This way, one can login into AWS using their company credentials 
+* Identity Federation uses the SAML standard (Active Directory)
+---
+#### 3.2.3 IAM 101 Brain Dump
+* One IAM **User** per PHYSICAL PERSON 
+* One IAM **Role** per Application 
+* IAM credentials should NEVER BE SHARED 
+* Never, ever, ever, ever, write IAM credentials in code. EVER. 
+* And even less, NEVER EVER EVER COMMIT YOUR IAM credentials 
+* **Never use the ROOT account except for initial setup.**
+* **Never use ROOT IAM Credentials**   
+---
+### 3.3 EC2
+#### 3.3.1 EC2 Introduction
+* EC2 is one of most popular of AWS offering 
+* It mainly consists in the capability of : 
+    * Renting virtual machines (EC2) 
+    * Storing data on virtual drives (EBS) 
+    * Distributing load across machines (ELB) 
+    * Scaling the services using an auto-scaling group (ASG) 
+---
+#### 3.3.2 Introduction to Security Groups
+* Security Groups are the fundamental of network security in AWS 
+* They control how traffic is allowed into or out of our EC2 Machines.      
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/secutity-groups-1.jpg)   
+* It is the most fundamental skill to learn to troubleshoot networking issues 
+* In this lecture, we’ll learn how to use them to allow, inbound and outbound ports   
+
+* Security groups are acting as a “firewall” on EC2 instances 
+* They regulate: 
+    * Access to Ports 
+    * Authorised IP ranges – IPv4 and IPv6 
+    * Control of inbound network (from other to the instance) 
+    * Control of outbound network (from the instance to other)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/secutity-groups-2.jpg)     
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/secutity-groups-3.jpg)    
+**Security Groups Good to know**   
+* Can be attached to multiple instances 
+* Locked down to a region / VPC combination 
+* Does live “outside” the EC2 – if traffic is blocked the EC2 instance won’t see it 
+* It’s good to maintain one separate security group for SSH access 
+* If your application is not accessible (time out), then it’s a security group issue 
+* If your application gives a “connection refused“ error, then it’s an application error or it’s not launched 
+* All inbound traffic is blocked by default 
+* All outbound traffic is authorised by default
+---
+#### 3.3.3 Elastic IP
+##### 3.3.3.1 Private vs Public IP (IPv4)
+* Networking has two sorts of IPs. IPv4 and IPv6: 
+    * IPv4: 1.160.10.240 
+    * IPv6: 3ffe: 1900:4545:3:200:f8ff:fe21:67cf 
+* In this course, we will only be using IPv4. 
+* IPv4 is still the most common format used online. 
+* IPv6 is newer and solves problems for the Internet of Things (IoT).
+* IPv4 allows for 3.7 billion different addresses in the public space 
+* IPv4: [0-255].[0-255].[0-255].[0-255].   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/elastic-ip-1.jpg)   
+* Public IP: 
+    * Public IP means the machine can be identified on the internet (WWW)
+    * Must be unique across the whole web (not two machines can have the same public IP). 
+    * Can be geo-located easily 
+* Private IP: 
+    * Private IP means the machine can only be identified on a private network only 
+    * The IP must be unique across the private network 
+    * BUT two different private networks (two companies) can have the same IPs. 
+    * Machines connect to WWW using an internet gateway (a proxy) 
+    * Only a specified range of IPs can be used as private IP
+##### 3.3.3.2 Elastic IPs
+* When you stop and then start an EC2 instance, it can change its public IP . 
+* If you need to have a fixed public IP for your instance, you need an Elastic IP 
+* An Elastic IP is a public IPv4 IP you own as long as you don’t delete it
+* You can attach it to one instance at a time
+* With an Elastic IP address, you can mask the failure of an instance or software by rapidly remapping the address to another instance in your account. 
+* You can only have 5 Elastic IP in your account (you can ask AWS to increase that).
+* Overall, try to avoid using Elastic IP: 
+    * hey often reflect poor architectural decisions 
+    * Instead, use a random public IP and register a DNS name to it 
+    * Or, as we’ll see later, use a Load Balancer and don’t use a public IP
+---
+#### 3.3.4 Launching an Apache Server on EC2   
 yum update -y  
 yum install -y httpd.x86_64  
 systemctl start httpd.service  
 systemctl enable httpd.service  
 更改安全组 添加http 80端口 inbound  
 echo "hello world" > /var/www/html/index.html  
-echo "Hello World from $(hostname -f)" > /var/www/html/index.html  
+echo "Hello World from $(hostname -f)" > /var/www/html/index.html   
+---
+#### 3.3.5 EC2 User Data
+* It is possible to bootstrap our instances using an EC2 User data script.
+* bootstrapping means launching commands when a machine starts 
+* That script is only run once at the instance first start 
+* EC2 user data is used to automate boot tasks such as: 
+    * Installing updates 
+    * Installing software 
+    * Downloading common files from the internet 
+    * Anything you can think of 
+* The EC2 User Data Script runs with the root user
+---
+#### 3.3.6 EC2 Instance Launch Types
+* On Demand Instances: short workload, predictable pricing 
+* Reserved Instances: long workloads (>= 1 year) 
+* Convertible Reserved Instances: long workloads with flexible instances 
+* Scheduled Reserved Instances: launch within time window you reserve 
+* Spot Instances: short workloads, for cheap, can lose instances 
+* Dedicated Instances: no other customers will share your hardware 
+* Dedicated Hosts: book an entire physical server, control instance placement
+##### 3.3.6.1 EC2 On Demand
+* Pay for what you use (billing per second, after the first minute) 
+* Has the highest cost but no upfront payment 
+* No long term commitment 
+* Recommended for short-term and un-interrupted workloads, where you can't predict how the application will behave.
+##### 3.3.6.2 EC2 Reserved Instances
+* Up to 75% discount compared to On-demand 
+* Pay upfront for what you use with long term commitment 
+* Reservation period can be 1 or 3 years 
+* Reserve a specific instance type 
+* Recommended for steady state usage applications (think database) 
+* **Convertible Reserved Instance** 
+    * can change the EC2 instance type 
+    * Up to 54% discount 
+* **Scheduled Reserved Instances** 
+    * launch within time window you reserve 
+    * When you require a fraction of day / week / month
+##### 3.3.6.3 EC2 Spot Instances
+* Can get a discount of up to 90% compared to On-demand 
+* You bid a price and get the instance as long as its under the price 
+* Price varies based on offer and demand 
+* Spot instances are reclaimed with a 2 minute notification warning when the spot price goes above your bid 
+* **Used for batch jobs, Big Data analysis, or workloads that are resilient to failures.**
+* **Not great for critical jobs or databases**
+##### 3.3.6.4 EC2 Dedicated Hosts
+* Physical dedicated EC2 server for your use 
+* Full control of EC2 Instance placement 
+* Visibility into the underlying sockets / physical cores of the hardware
+* Allocated for your account for a 3 year period reservation 
+* More expensive 
+* Useful for software that have complicated licensing model (BYOL –Bring Your Own License) 
+* Or for companies that have strong regulatory or compliance needs
+##### 3.3.6.5 EC2 Dedicated Instances
+* Instances running on hardware that’s dedicated to you 
+* May share hardware with other instances in same account 
+* No control over instance placement (can move hardware after Stop / Start)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/ec2-1.jpg) 
+##### 3.3.6.6 EC2 Instance Launch Types Compair
+* On demand: coming and staying in resort whenever we like, we pay the full price 
+* Reserved: like planning ahead and if we plan to stay for a long time, we may get a good discount.
+* Spot instances: the hotel allows people to bid for the empty rooms and the highest bidder keeps the rooms. You can get kicked out at any time 
+* Dedicated Hosts: We book an entire building of the resort
+#### 3.3.7 EC2 Pricing
+* EC2 instances prices (per hour) varies based on these parameters: 
+    * Region you’re in 
+    * Instance Type you’re using 
+    * On-Demand vs Spot vs Reserved vs Dedicated Host 
+    * Linux vs Windows vs Private OS (RHEL, SLES, Windows SQL)
+* You are billed by the second, with a minimum of 60 seconds. 
+* You also pay for other factors such as storage, data transfer, fixed IP public addresses, load balancing 
+* You do not pay for the instance if the instance is stopped   
+**EC2 Pricing Example**
+* t2.small in US-EAST -1 (VIRGINIA), cost $0.023 per Hour 
+* If used for: 
+    * 6 seconds, it costs $0.023/60 =  $0.000383 (minimum of 60 seconds)
+    * 60 seconds, it costs $0.023/60 =  $0.000383 (minimum of 60 seconds) 
+    * 30 minutes, it costs $0.023/2 =  $0.0115 
+    * 1 month, it costs $0.023 * 24 * 30 = $16.56 (assuming a month is 30 days) 
+    * X seconds (X > 60), it costs $0.023 * X / 3600 
+* The best way to know the pricing is to consult the pricing page: https://aws.amazon.com/ec2/pricing/on-demand/
+---
+#### 3.3.8 AMI
+##### 3.3.8.1 AMI Introduction
+* As we saw, AWS comes with base images such as: 
+    * Ubuntu 
+    * Fedora 
+    * RedHat 
+    * Windows 
+    * Etc… 
+* These images can be customised at runtime using EC2 User data 
+* But what if we could create our own image, ready to go? 
+* That’s an AMI – an image to use to create our instances 
+* AMIs can be built for Linux or Windows machines
+##### 3.3.8.2 Why would you use a custom AMI?
+* Using a custom built AMI can provide the following advantages:
+    * Pre-installed packages needed 
+    * Faster boot time (no need for long ec2 user data at boot time) 
+    * Machine comes configured with monitoring / enterprise software
+    * Security concerns – control over the machines in the network 
+    * Control of maintenance and updates of AMIs over time 
+    * Active Directory Integration out of the box 
+    * Installing your app ahead of time (for faster deploys when auto-scaling) 
+    * Using someone else’s AMI that is optimised for running an app, DB, etc… 
+* AMI are built for a specific AWS region (!)
+#### 3.3.9 EC2 Instances Overview
+##### 3.3.9.1 Introduction
+* Instances have 5 distinct characteristics advertised on the website: 
+    * The RAM (type, amount, generation) 
+    * The CPU (type, make, frequency, generation, number of cores) 
+    * The I/O (disk performance, EBS optimisations) 
+    * The Network (network bandwidth, network latency) 
+    * The Graphical Processing Unit (GPU) 
+* It may be daunting to choose the right instance type (there are over 50 of them) - https://aws.amazon.com/ec2/instance-types/
+* https://ec2instances.info/ can help with summarizing the types of instances 
+* R/C/P/G/H/X/I/F/Z/CR are specialised in RAM, CPU, I/O, Network, GPU 
+* M instance types are balanced 
+* T2/T3 instance types are “burstable”
+##### 3.3.9.2 Burstable Instances (T2)
+* AWS has the concept of burstable instances (T2 machines) 
+* Burst means that overall, the instance has OK CPU performance. 
+* When the machine needs to process something unexpected (a spike in load for example), it can burst, and CPU can be VERY good. 
+* If the machine bursts, it utilizes “burst credits”
+* If all the credits are gone, the CPU becomes BAD 
+* If the machine stops bursting, credits are accumulated over time   
 
+* Burstable instances can be amazing to handle unexpected traffic and getting the insurance that it will be handled correctly 
+* If your instance consistently runs low on credit, you need to move to a different kind of non-burstable instance (all the ones described before).
+---
+3.3.10 EC2 – Checklist
+* Know how to SSH into EC2 (and change .pem file permissions) 
+* Know how to properly use security groups 
+* Know the fundamental differences between private vs public vs elastic IP 
+* Know how to use User Data to customize your instance at boot time 
+* Know that you can build custom AMI to enhance your OS 
+* EC2 instances are billed by the second and can be easily created and thrown away, welcome to the cloud!
+---
+## Section 4:AWS Fundamentals – Load Balancing, Auto Scaling Groups and EBS Volumes<a name="l4"/>
+### 4.1 Load Balancing
+#### 4.1.1 Load Balancing Introduction
+##### 4.1.1.1 What is load balancing?
+* Load balancers are servers that forward internet traffic to multiple servers (EC2 Instances) downstream.   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lb-1.jpg) 
+##### 4.1.1.2 Why use a load balancer?
+* Spread load across multiple downstream instances 
+* Expose a single point of access (DNS) to your application 
+* Seamlessly handle failures of downstream instances 
+* Do regular health checks to your instances 
+* Provide SSL termination (HTTPS) for your websites 
+* Enforce stickiness with cookies 
+* High availability across zones 
+* Separate public traffic from private traffic
+##### 4.1.1.3 Why use an EC2 Load Balancer?
+* An ELB (EC2 Load Balancer) is a managed load balancer 
+    * AWS guarantees that it will be working 
+    * AWS takes care of upgrades, maintenance, high availability 
+    * AWS provides only a few configuration knobs 
+* It costs less to setup your own load balancer but it will be a lot more effort on your end. 
+* It is integrated with many AWS offerings / services
+---
+#### 4.1.2 Types of load balancer on AWS
+* AWS has 3 kinds of Load Balancers 
+* Classic Load Balancer (v1 - old generation) - 2009 
+* Application Load Balancer (v2 - new generation) - 2016 
+* Network Load Balancer (v2 - new generation) - 2017 
+* Overall, it is recommended to use the newer / v2 generation load balancers as they provide more features 
+* You can setup internal (private) or external (public) ELBs
+---
+#### 4.1.3 Health Checks
+* Health Checks are crucial for Load Balancers 
+* They enable the load balancer to know if instances it forwards traffic to are available to reply to requests 
+* The health check is done on a port and a route (/health is common) 
+* If the response is not 200 (OK), then the instance is unhealthy   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lb-2.jpg)   
+---
+#### 4.1.4 Application Load Balancer (v2)
+##### 4.1.4.1 Application Load Balancer Intro
+* Application load balancers (Layer 7) allow to do: 
+    * Load balancing to multiple HTTP applications across machines (target groups) 
+    * Load balancing to multiple applications on the same machine (ex: containers) 
+    * Load balancing based on route in URL 
+    * Load balancing based on hostname in URL
+* Basically, they’re awesome for micro services & container-based application (example: Docker & Amazon ECS) 
+* Has a port mapping feature to redirect to a dynamic port 
+* In comparison, we would need to create one Classic Load Balancer per application before. That was very expensive and inefficient!
+##### 4.1.4.2 Application Load Balancer (v2) HTTP Based Traffic
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lb-3.jpg)   
+##### 4.1.4.3 Application Load Balancer v2 Good to Know
+* Stickiness can be enabled at the target group level 
+    * Same request goes to the same instance 
+    * Stickiness is directly generated by the ALB (not the application) 
+* ALB support HTTP/HTTPS & Websockets protocols 
+* The application servers don’t see the IP of the client directly 
+    * The true IP of the client is inserted in the header X-Forwarded-For 
+    * We can also get Port (X-Forwarded-Port) and proto (X-Forwarded-Proto)   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lb-4.jpg)   
+---
+#### 4.1.5 Network Load Balancer (v2)
+* Network load balancers (Layer 4) allow to do: 
+    * Forward TCP traffic to your instances 
+    * Handle millions of request per seconds 
+    * Support for static IP or elastic IP 
+    * Less latency ~100 ms (vs 400 ms for ALB) 
+* Network Load Balancers are mostly used for extreme performance and should not be the default load balancer you choose 
+* Overall, the creation process is the same as Application Load Balancers    
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/lb-5.jpg)   
+---
+#### 4.1.6 Load Balancer Good to Know
+* Classic Load Balancers are Deprecated 
+    * Application Load Balancers for HTTP / HTTPs & Websocket 
+    * Network Load Balancer for TCP 
+* CLB, ALB, NLB support SSL certificates and provide SSL termination 
+* All Load Balancers have health check capability 
+* ALB can route on based on hostname / path 
+* ALB is a great fit with ECS (Docker)
+* Any Load Balancer (CLB, ALB, NLB) has a static host name. Do not resolve and use underlying IP 
+* LBs can scale but not instantaneously – contact AWS for a “warm-up”
+* NLB directly see the client IP 
+* 4xx errors are client induced errors 
+* 5xx errors are application induced errors 
+    * Load Balancer Errors 503 means at capacity or no registered target 
+* If the LB can’t connect to your application, check your security groups!
+---
+### 4.2 Auto Scaling Group
+#### 4.2.1 Auto Scaling Group Intro
+* In real-life, the load on your websites and application can change 
+* In the cloud, you can create and get rid of servers very quickly 
+* The goal of an Auto Scaling Group (ASG) is to: 
+    * Scale out (add EC2 instances) to match an increased load 
+    * Scale in (remove EC2 instances) to match a decreased load 
+    * Ensure we have a minimum and a maximum number of machines running
+    * Automatically Register new instances to a load balancer
+---
 ## Section 9:<a name='l9-aws-cicd'/> AWS CI/CD ###
 What we’d like is to push our code “in a repository” and have it deployed onto the AWS
 -  Automatically
@@ -1563,6 +1904,51 @@ A transaction is a write to both table, or none!
     * Multi region, fully replicated, high performance 
 * Amazon DMS can be used to migrate to DynamoDB (from Mongo, Oracle, MySQL, S3, etc…) 
 * You can launch a local DynamoDB on your computer for development purposes
+---
+## Section 15 API Gateway
+### 15.1 AWS API Gateway Overview
+**Building a Serverless API**   
+![image](https://github.com/Sunmit/Notes/blob/master/AWS%20Certified%20Developer/images/api-overview-1.jpg)   
+* AWS Lambda + API Gateway: No infrastructure to manage 
+* Handle API versioning (v1, v2…) 
+* Handle different environments (dev, test, prod…) 
+* Handle security (Authentication and Authorization) 
+* Create API keys, handle request throttling 
+* Swagger / Open API import to quickly define APIs 
+* Transform and validate requests and responses 
+* Generate SDK and API specifications 
+* Cache API responses   
+**API Gateway Integrations**
+* Outside of VPC: 
+    * AWS Lambda (most popular / powerful) 
+    * Endpoints on EC2 
+    * Load Balancers 
+    * Any AWS Service 
+    * External and publicly accessible HTTP endpoints
+* Inside of VPC: 
+    * AWS Lambda in your VPC 
+    * EC2 endpoints in your VPC
+### 15.2 AWS API Gateway Stages and Deployment   
+####15.2.1 Deployment Stages
+* Making changes in the API Gateway does not mean they’re effective 
+* You need to make a “deployment” for them to be in effect 
+* It’s a common source of confusion 
+* Changes are deployed to “Stages” (as many as you want) 
+* Use the naming you like for stages (dev, test, prod) 
+* Each stage has its own configuration parameters 
+* Stages can be rolled back as a history of deployments is kept
+---
+#### 15.2.2 API Gateway – Stage Variables
+* Stage variables are like environment variables for API Gateway 
+* Use them to change often changing configuration values 
+* They can be used in: 
+    * Lambda function ARN 
+    * HTTP Endpoint 
+    * Parameter mapping templates 
+* Use cases: 
+    * Configure HTTP endpoints your stages talk to (dev, test, prod…) 
+    * Pass configuration parameters to AWS Lambda through mapping templates 
+* Stage variables are passed to the ”context” object in AWS Lambda
 ---
 ## [BACK TO TOP](#l0)
 ---
